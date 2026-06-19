@@ -1,16 +1,35 @@
-## Hi there 👋
+# Truvem
 
-<!--
-**truvem/truvem** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+Universal persistent memory for AI agents.
 
-Here are some ideas to get you started:
+## What is Truvem?
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+Truvem gives AI agents persistent memory across sessions,
+models, and platforms. Works with GPT, Claude, Gemini,
+Mistral, Llama — any model.
+
+## The problem
+
+AI agents forget everything between sessions.
+Their weights are frozen. They have no memory layer.
+Every conversation starts from zero.
+
+## The solution
+
+Truvem is the memory infrastructure layer for AI agents:
+- Persistent memory across sessions
+- Semantic context retrieval
+- Agent identity (DID)
+- Works with any model via MCP
+
+## Quick start
+
+pip install truvem
+
+## Status
+
+🚧 Building in public. Star to follow the journey.
+
+## Contact
+
+gettruvem@gmail.com
