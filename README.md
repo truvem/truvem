@@ -19,17 +19,20 @@ Every conversation starts from zero.
 Truvem is the memory infrastructure layer for AI agents:
 - Persistent memory across sessions
 - Semantic context retrieval
-- Agent identity (DID)
-- Works with any model via MCP
+- Works with any LLM
 
-## Quick start
+## Live API
+
+https://truvem.onrender.com/docs
+
+## Install SDK
 
 pip install truvem
 
-## Status
+## Quick start
 
-🚧 Building in public. Star to follow the journey.
+from truvem import Truvem
 
-## Contact
-
-gettruvem@gmail.com
+client = Truvem(api_key="your_key")
+client.remember("agent-1", "User prefers dark mode")
+memories = client.recall("agent-1")
