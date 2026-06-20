@@ -1,10 +1,21 @@
 import requests
 
 class Client:
-    def __init__(self, api_key: str, base_url: str = "https://truvem.onrender.com"):
+    def __init__(self, api_key: str = None, base_url: str = "https://truvem.onrender.com"):
         self.api_key = api_key
         self.base_url = base_url
-        self.headers = {"x-api-key": api_key}
+        self.headers = {"x-api-key": api_key} if api_key else {}
+
+    def register(self, email: str) -> dict:
+        resp = requests.post(
+            f"{self.base_url}/v1/register",
+            json={"email": email}
+        )
+        data = resp.json()
+        if "api_key" in data:
+            self.api_key = data["api_key"]
+            self.headers = {"x-api-key": self.api_key}
+        return data
 
     def remember(self, agent_id: str, content: str) -> dict:
         resp = requests.post(
