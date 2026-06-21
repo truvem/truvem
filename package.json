@@ -1,0 +1,17 @@
+{
+  "name": "truvem",
+  "version": "0.2.0",
+  "description": "Universal persistent memory for AI agents",
+  "main": "index.js",
+  "author": "Truvem",
+  "license": "MIT",
+  "keywords": ["ai", "agents", "memory", "llm", "persistent"],
+  "homepage": "https://truvem.lovable.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/truvem/truvem"
+  },
+  "dependencies": {
+    "axios": "^1.0.0"
+  }
+}
