@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/truvem/truvem/main/a_Minimalist_tech_logo.png" alt="Truvem" width="150" height="150">
+  <img src="https://raw.githubusercontent.com/truvem/truvem/main/logo.svg" alt="Truvem" width="150" height="150">
 </p>
 
 # Truvem
