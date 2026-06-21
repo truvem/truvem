@@ -1,6 +1,6 @@
 
 <p align="center">
-  <img src="https://placehold.co/150x150/6366f1/ffffff?text=T" alt="Truvem" width="150" height="150">
+  <img src="https://raw.githubusercontent.com/truvem/truvem/main/a_Minimalist_tech_logo.png" alt="Truvem" width="150" height="150">
 </p>
 
 # Truvem
