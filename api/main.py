@@ -33,6 +33,13 @@ class WriteRequest(BaseModel):
 class ReadRequest(BaseModel):
     agent_id: str
 
+class ForgetRequest(BaseModel):
+    memory_id: str
+
+class SearchRequest(BaseModel):
+    agent_id: str
+    query: str
+
 class RegisterRequest(BaseModel):
     email: str
 
@@ -47,7 +54,7 @@ def check_key(x_api_key: Optional[str] = Header(None)):
 @app.get("/")
 @limiter.limit("60/minute")
 def root(request: Request):
-    return {"name": "Truvem", "version": "0.2.0", "status": "ok"}
+    return {"name": "Truvem", "version": "0.3.0", "status": "ok"}
 
 @app.api_route("/health", methods=["GET", "HEAD"])
 @limiter.limit("60/minute")
@@ -82,4 +89,18 @@ def write_memory(request: Request, req: WriteRequest, x_api_key: Optional[str] =
 def read_memory(request: Request, req: ReadRequest, x_api_key: Optional[str] = Header(None)):
     check_key(x_api_key)
     result = supabase.table("memories").select("*").eq("agent_id", req.agent_id).execute()
+    return {"status": "ok", "memories": result.data}
+
+@app.delete("/v1/memory/forget")
+@limiter.limit("100/minute")
+def forget_memory(request: Request, req: ForgetRequest, x_api_key: Optional[str] = Header(None)):
+    check_key(x_api_key)
+    result = supabase.table("memories").delete().eq("id", req.memory_id).execute()
+    return {"status": "ok", "deleted": req.memory_id}
+
+@app.post("/v1/memory/search")
+@limiter.limit("100/minute")
+def search_memory(request: Request, req: SearchRequest, x_api_key: Optional[str] = Header(None)):
+    check_key(x_api_key)
+    result = supabase.table("memories").select("*").eq("agent_id", req.agent_id).ilike("content", f"%{req.query}%").execute()
     return {"status": "ok", "memories": result.data}
