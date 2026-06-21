@@ -1,28 +1,1488 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Truvem — Memory for AI Agents</title>
-  <style>
-    body { font-family: sans-serif; max-width: 600px; margin: 80px auto; padding: 20px; background: #0a0a0a; color: #fff; }
-    h1 { font-size: 48px; margin-bottom: 10px; }
-    p { color: #aaa; font-size: 18px; line-height: 1.6; }
-    .badge { background: #1a1a1a; border: 1px solid #333; padding: 20px; border-radius: 8px; margin: 30px 0; }
-    code { background: #1a1a1a; padding: 4px 8px; border-radius: 4px; color: #0f0; }
-    a { color: #0f0; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Truvem — Persistent Memory Infrastructure for AI Agents</title>
+    <meta name="description" content="Give your AI agents persistent memory with just 2 API calls. Works with GPT-4, Claude, Gemini, Mistral, and Llama.">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Prism.js for syntax highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #111111;
+            --bg-card: #161616;
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1aa;
+            --accent-violet: #8b5cf6;
+            --accent-indigo: #6366f1;
+            --accent-gradient: linear-gradient(135deg, #8b5cf6, #6366f1);
+            --border-color: #27272a;
+            --success: #22c55e;
+            --error: #ef4444;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        /* Animated gradient orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.15;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .orb-1 {
+            width: 600px;
+            height: 600px;
+            background: var(--accent-violet);
+            top: -200px;
+            right: -200px;
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        .orb-2 {
+            width: 500px;
+            height: 500px;
+            background: var(--accent-indigo);
+            bottom: -150px;
+            left: -150px;
+            animation: float 25s ease-in-out infinite reverse;
+        }
+        
+        .orb-3 {
+            width: 400px;
+            height: 400px;
+            background: #a855f7;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: float 30s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            25% { transform: translate(30px, -30px); }
+            50% { transform: translate(-20px, 20px); }
+            75% { transform: translate(20px, 30px); }
+        }
+        
+        /* Navigation */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 1rem 2rem;
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .nav.scrolled {
+            padding: 0.75rem 2rem;
+        }
+        
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.02em;
+        }
+        
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+        
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+        
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+        
+        .btn-primary {
+            background: var(--accent-gradient);
+            color: white;
+            padding: 0.6rem 1.25rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(139, 92, 246, 0.3);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            padding: 0.6rem 1.25rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .btn-secondary:hover {
+            border-color: var(--accent-violet);
+            background: rgba(139, 92, 246, 0.1);
+        }
+        
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        /* Hero Section */
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8rem 2rem 4rem;
+            overflow: hidden;
+        }
+        
+        #hero-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            max-width: 900px;
+        }
+        
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 50px;
+            font-size: 0.85rem;
+            color: var(--accent-violet);
+            margin-bottom: 2rem;
+        }
+        
+        .hero-badge span {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .hero h1 {
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.03em;
+        }
+        
+        .hero h1 .gradient-text {
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hero-subtitle {
+            font-size: clamp(1rem, 2vw, 1.25rem);
+            color: var(--text-secondary);
+            margin-bottom: 2.5rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .hero-buttons .btn-primary,
+        .hero-buttons .btn-secondary {
+            padding: 0.875rem 1.75rem;
+            font-size: 1rem;
+        }
+        
+        /* Stats Section */
+        .stats {
+            position: relative;
+            z-index: 2;
+            padding: 4rem 2rem;
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(10, 10, 10, 0.5);
+        }
+        
+        .stats-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 1.5rem;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        /* Code Demo Section */
+        .code-section {
+            position: relative;
+            z-index: 2;
+            padding: 6rem 2rem;
+        }
+        
+        .section-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+        
+        .section-header h2 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 800;
+            margin-bottom: 1rem;
+            letter-spacing: -0.02em;
+        }
+        
+        .section-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .code-demo {
+            max-width: 700px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+        
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .code-dots {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .code-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .code-dot:nth-child(1) { background: #ff5f57; }
+        .code-dot:nth-child(2) { background: #ffbd2e; }
+        .code-dot:nth-child(3) { background: #28ca42; }
+        
+        .copy-btn {
+            background: rgba(139, 92, 246, 0.2);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            color: var(--accent-violet);
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+        
+        .copy-btn:hover {
+            background: rgba(139, 92, 246, 0.3);
+        }
+        
+        .copy-btn.success {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: rgba(34, 197, 94, 0.3);
+            color: var(--success);
+        }
+        
+        .code-content {
+            padding: 1.5rem;
+            overflow-x: auto;
+        }
+        
+        .code-content pre {
+            margin: 0;
+            background: transparent !important;
+        }
+        
+        .code-content code {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+        
+        /* How It Works Section */
+        .how-it-works {
+            position: relative;
+            z-index: 2;
+            padding: 6rem 2rem;
+            background: var(--bg-secondary);
+        }
+        
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .step-card {
+            position: relative;
+            padding: 2.5rem;
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            transition: all 0.4s ease;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+        
+        .step-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--accent-violet);
+            box-shadow: 0 20px 60px rgba(139, 92, 246, 0.15);
+        }
+        
+        .step-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            background: var(--accent-gradient);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+        
+        .step-number {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent-gradient);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+        
+        .step-card h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+        }
+        
+        .step-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+        
+        .step-connector {
+            display: none;
+        }
+        
+        /* Compatibility Section */
+        .compatibility {
+            position: relative;
+            z-index: 2;
+            padding: 6rem 2rem;
+        }
+        
+        .badges-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1.5rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .llm-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 1.5rem;
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .llm-badge:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-violet);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+        }
+        
+        .llm-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: rgba(139, 92, 246, 0.1);
+        }
+        
+        .llm-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        
+        /* Pricing Section */
+        .pricing {
+            position: relative;
+            z-index: 2;
+            padding: 6rem 2rem;
+            background: var(--bg-secondary);
+        }
+        
+        .pricing-card {
+            max-width: 450px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            border-radius: 24px;
+            border: 1px solid var(--accent-violet);
+            padding: 3rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .pricing-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--accent-gradient);
+        }
+        
+        .pricing-popular {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: var(--accent-gradient);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .pricing-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .pricing-price {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin: 1rem 0;
+        }
+        
+        .pricing-price span {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        
+        .pricing-features {
+            list-style: none;
+            text-align: left;
+            margin: 2rem 0;
+        }
+        
+        .pricing-features li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+        
+        .pricing-features li:last-child {
+            border-bottom: none;
+        }
+        
+        .pricing-features li::before {
+            content: '✓';
+            color: var(--success);
+            font-weight: 700;
+        }
+        
+        .pricing-cta {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1rem;
+        }
+        
+        .pricing-note {
+            margin-top: 1.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        /* Get API Key Section */
+        .get-api-key {
+            position: relative;
+            z-index: 2;
+            padding: 6rem 2rem;
+        }
+        
+        .api-key-form {
+            max-width: 500px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            padding: 2.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: white;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent-violet);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+        }
+        
+        .form-group input::placeholder {
+            color: var(--text-secondary);
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1rem;
+        }
+        
+        .api-key-result {
+            display: none;
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 10px;
+        }
+        
+        .api-key-result.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .api-key-result.error {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+        
+        .api-key-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .api-key-display {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: var(--bg-primary);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 0.5rem;
+        }
+        
+        .api-key-text {
+            flex: 1;
+            font-family: monospace;
+            font-size: 0.9rem;
+            word-break: break-all;
+            color: var(--success);
+        }
+        
+        .api-key-result.error .api-key-text {
+            color: var(--error);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Footer */
+        .footer {
+            position: relative;
+            z-index: 2;
+            padding: 4rem 2rem;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+        }
+        
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+        
+        .footer-logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s ease;
+        }
+        
+        .footer-links a:hover {
+            color: var(--text-primary);
+        }
+        
+        .footer-email {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        /* Scroll animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease;
+        }
+        
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: rgba(10, 10, 10, 0.98);
+                padding: 1.5rem;
+                flex-direction: column;
+                border-bottom: 1px solid var(--border-color);
+            }
+            
+            .nav-links.active {
+                display: flex;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .steps-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .footer-container {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .footer-links {
+                justify-content: center;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .hero-buttons {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .hero-buttons a {
+                width: 100%;
+            }
+        }
+        
+        /* Loading state */
+        .loading {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        .btn-primary.loading .loading {
+            display: inline-block;
+        }
+        
+        .btn-primary.loading span {
+            display: none;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
-  <h1>Truvem</h1>
-  <p>Universal persistent memory for AI agents.<br>Works with GPT, Claude, Gemini, Mistral — any model.</p>
-  <div class="badge">
-    <p>🧠 <strong>The problem:</strong> AI agents forget everything between sessions.</p>
-    <p>✅ <strong>The solution:</strong> Truvem gives agents persistent memory via a simple API.</p>
-  </div>
-  <p><strong>Quick start:</strong></p>
-  <code>pip install truvem</code>
-  <br><br>
-  <p>API: <a href="https://truvem-production.up.railway.app/docs">truvem-production.up.railway.app/docs</a></p>
-  <p>Contact: <a href="mailto:gettruvem@gmail.com">gettruvem@gmail.com</a></p>
+    <!-- Animated Orbs -->
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    
+    <!-- Navigation -->
+    <nav class="nav" id="nav">
+        <div class="nav-container">
+            <a href="#" class="logo">Truvem</a>
+            <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
+            <div class="nav-links" id="navLinks">
+                <a href="https://truvem.onrender.com/docs">Docs</a>
+                <a href="https://github.com/truvem/truvem">GitHub</a>
+                <a href="#pricing">Pricing</a>
+                <a href="#get-api-key" class="btn-primary">Get API Key</a>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+        <canvas id="hero-canvas"></canvas>
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span>●</span> Now in Public Beta
+            </div>
+            <h1>
+                Your AI agents<br>
+                finally have <span class="gradient-text">memory</span>.
+            </h1>
+            <p class="hero-subtitle">
+                Two API calls. Any model. Persistent.<br>
+                Give your agents the context they deserve.
+            </p>
+            <div class="hero-buttons">
+                <a href="https://truvem.onrender.com/docs" class="btn-primary">Get Started Free →</a>
+                <a href="https://github.com/truvem/truvem" class="btn-secondary">View on GitHub</a>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Stats Section -->
+    <section class="stats" id="stats">
+        <div class="stats-container">
+            <div class="stat-item reveal">
+                <div class="stat-value" data-target="2">0</div>
+                <div class="stat-label">API calls</div>
+            </div>
+            <div class="stat-item reveal">
+                <div class="stat-value" data-target="5">0</div>
+                <div class="stat-label">LLMs supported</div>
+            </div>
+            <div class="stat-item reveal">
+                <div class="stat-value" data-target="100">0</div>
+                <div class="stat-label">&lt;ms latency</div>
+            </div>
+            <div class="stat-item reveal">
+                <div class="stat-value">∞</div>
+                <div class="stat-label">Free forever</div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Code Demo Section -->
+    <section class="code-section" id="code">
+        <div class="section-container">
+            <div class="section-header reveal">
+                <h2>Dead simple integration</h2>
+                <p>Two lines of code. That's all it takes to give your agents persistent memory.</p>
+            </div>
+            <div class="code-demo reveal">
+                <div class="code-header">
+                    <div class="code-dots">
+                        <div class="code-dot"></div>
+                        <div class="code-dot"></div>
+                        <div class="code-dot"></div>
+                    </div>
+                    <button class="copy-btn" id="copyBtn">Copy</button>
+                </div>
+                <div class="code-content">
+                    <pre><code class="language-python" id="codeBlock">pip install truvem
+from truvem import Truvem
+
+client = Truvem(api_key="your_key")
+
+# Store a memory
+client.remember("agent-1", "User prefers dark mode")
+
+# Recall memories
+memories = client.recall("agent-1")</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- How It Works Section -->
+    <section class="how-it-works" id="how-it-works">
+        <div class="section-container">
+            <div class="section-header reveal">
+                <h2>How it works</h2>
+                <p>Three simple steps to persistent AI memory</p>
+            </div>
+            <div class="steps-grid">
+                <div class="step-card reveal">
+                    <div class="step-number">1</div>
+                    <div class="step-icon">📦</div>
+                    <h3>Install SDK</h3>
+                    <p>One command to install. Works with Python, Node.js, and more coming soon.</p>
+                </div>
+                <div class="step-card reveal">
+                    <div class="step-number">2</div>
+                    <div class="step-icon">💾</div>
+                    <h3>Write Memory</h3>
+                    <p>Store any context your agent needs. User preferences, past conversations, learned facts.</p>
+                </div>
+                <div class="step-card reveal">
+                    <div class="step-number">3</div>
+                    <div class="step-icon">🧠</div>
+                    <h3>Recall Anytime</h3>
+                    <p>Retrieve relevant memories in &lt;100ms. Your agents finally remember.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Compatibility Section -->
+    <section class="compatibility" id="compatibility">
+        <div class="section-container">
+            <div class="section-header reveal">
+                <h2>Works with your favorite models</h2>
+                <p>Truvem is model-agnostic. Use it with any LLM.</p>
+            </div>
+            <div class="badges-container">
+                <div class="llm-badge reveal">
+                    <div class="llm-icon">🤖</div>
+                    <span class="llm-name">GPT-4</span>
+                </div>
+                <div class="llm-badge reveal">
+                    <div class="llm-icon">🔮</div>
+                    <span class="llm-name">Claude</span>
+                </div>
+                <div class="llm-badge reveal">
+                    <div class="llm-icon">✨</div>
+                    <span class="llm-name">Gemini</span>
+                </div>
+                <div class="llm-badge reveal">
+                    <div class="llm-icon">🌀</div>
+                    <span class="llm-name">Mistral</span>
+                </div>
+                <div class="llm-badge reveal">
+                    <div class="llm-icon">🦙</div>
+                    <span class="llm-name">Llama</span>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Pricing Section -->
+    <section class="pricing" id="pricing">
+        <div class="section-container">
+            <div class="section-header reveal">
+                <h2>Simple, transparent pricing</h2>
+                <p>Start free. Scale when you're ready.</p>
+            </div>
+            <div class="pricing-card reveal">
+                <div class="pricing-popular">Current Plan</div>
+                <div class="pricing-name">Free</div>
+                <div class="pricing-price">$0<span>/month</span></div>
+                <ul class="pricing-features">
+                    <li>Unlimited remember calls</li>
+                    <li>Unlimited recall calls</li>
+                    <li>All supported LLMs</li>
+                    <li>100ms latency SLA</li>
+                    <li>Community support</li>
+                </ul>
+                <a href="#get-api-key" class="btn-primary pricing-cta">Get API Key</a>
+                <p class="pricing-note">Paid plans coming soon with enhanced features</p>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Get API Key Section -->
+    <section class="get-api-key" id="get-api-key">
+        <div class="section-container">
+            <div class="section-header reveal">
+                <h2>Get your API key</h2>
+                <p>Start building with persistent memory in seconds</p>
+            </div>
+            <div class="api-key-form reveal">
+                <form id="apiKeyForm">
+                    <div class="form-group">
+                        <label for="email">Email address</label>
+                        <input type="email" id="email" name="email" placeholder="you@example.com" required>
+                    </div>
+                    <button type="submit" class="btn-primary submit-btn" id="submitBtn">
+                        <span>Get API Key</span>
+                        <div class="loading"></div>
+                    </button>
+                </form>
+                <div class="api-key-result" id="apiKeyResult">
+                    <div class="api-key-label">Your API Key:</div>
+                    <div class="api-key-display">
+                        <span class="api-key-text" id="apiKeyText"></span>
+                        <button class="copy-btn" id="copyApiKeyBtn">Copy</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-logo">Truvem</div>
+            <div class="footer-links">
+                <a href="https://truvem.onrender.com/docs">Docs</a>
+                <a href="https://github.com/truvem/truvem">GitHub</a>
+                <a href="mailto:gettruvem@gmail.com">gettruvem@gmail.com</a>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    
+    <script>
+        // Three.js Neural Network Background
+        (function initNeuralNetwork() {
+            const canvas = document.getElementById('hero-canvas');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            
+            // Create neural network nodes
+            const nodes = [];
+            const nodeCount = 80;
+            const nodeGeometry = new THREE.SphereGeometry(0.08, 16, 16);
+            const nodeMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0x8b5cf6,
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            for (let i = 0; i < nodeCount; i++) {
+                const node = new THREE.Mesh(nodeGeometry, nodeMaterial.clone());
+                node.position.set(
+                    (Math.random() - 0.5) * 20,
+                    (Math.random() - 0.5) * 15,
+                    (Math.random() - 0.5) * 10
+                );
+                node.userData = {
+                    originalPosition: node.position.clone(),
+                    speed: Math.random() * 0.5 + 0.5,
+                    offset: Math.random() * Math.PI * 2
+                };
+                scene.add(node);
+                nodes.push(node);
+            }
+            
+            // Create connections
+            const connectionMaterial = new THREE.LineBasicMaterial({ 
+                color: 0x6366f1,
+                transparent: true,
+                opacity: 0.15
+            });
+            
+            const connections = [];
+            const maxDistance = 4;
+            
+            function updateConnections() {
+                // Remove old connections
+                connections.forEach(conn => scene.remove(conn));
+                connections.length = 0;
+                
+                // Create new connections based on proximity
+                for (let i = 0; i < nodes.length; i++) {
+                    for (let j = i + 1; j < nodes.length; j++) {
+                        const distance = nodes[i].position.distanceTo(nodes[j].position);
+                        if (distance < maxDistance) {
+                            const geometry = new THREE.BufferGeometry().setFromPoints([
+                                nodes[i].position,
+                                nodes[j].position
+                            ]);
+                            const line = new THREE.Line(geometry, connectionMaterial.clone());
+                            line.material.opacity = 0.15 * (1 - distance / maxDistance);
+                            scene.add(line);
+                            connections.push(line);
+                        }
+                    }
+                }
+            }
+            
+            camera.position.z = 8;
+            
+            // Animation
+            let time = 0;
+            function animate() {
+                requestAnimationFrame(animate);
+                time += 0.01;
+                
+                nodes.forEach((node, i) => {
+                    const { originalPosition, speed, offset } = node.userData;
+                    node.position.x = originalPosition.x + Math.sin(time * speed + offset) * 0.3;
+                    node.position.y = originalPosition.y + Math.cos(time * speed + offset) * 0.3;
+                    node.position.z = originalPosition.z + Math.sin(time * speed * 0.5 + offset) * 0.2;
+                    
+                    // Pulsing effect
+                    node.material.opacity = 0.5 + Math.sin(time * 2 + offset) * 0.3;
+                    node.scale.setScalar(0.8 + Math.sin(time * 2 + offset) * 0.2);
+                });
+                
+                updateConnections();
+                
+                // Slow camera rotation
+                camera.position.x = Math.sin(time * 0.1) * 2;
+                camera.position.y = Math.cos(time * 0.1) * 1;
+                camera.lookAt(0, 0, 0);
+                
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+            
+            // Handle resize
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+            
+            // Mouse interaction
+            let mouseX = 0;
+            let mouseY = 0;
+            
+            document.addEventListener('mousemove', (e) => {
+                mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+                mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+            });
+        })();
+        
+        // GSAP Animations
+        gsap.registerPlugin(ScrollTrigger);
+        
+        // Nav scroll effect
+        window.addEventListener('scroll', () => {
+            const nav = document.getElementById('nav');
+            if (window.scrollY > 50) {
+                nav.classList.add('scrolled');
+            } else {
+                nav.classList.remove('scrolled');
+            }
+        });
+        
+        // Mobile menu
+        document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+            document.getElementById('navLinks').classList.toggle('active');
+        });
+        
+        // Scroll reveal animations
+        const revealElements = document.querySelectorAll('.reveal');
+        revealElements.forEach((el, index) => {
+            gsap.fromTo(el, 
+                { opacity: 0, y: 50 },
+                {
+                    opacity: 1,
+                    y: 0,
+                    duration: 0.8,
+                    delay: index * 0.1,
+                    scrollTrigger: {
+                        trigger: el,
+                        start: 'top 85%',
+                        toggleActions: 'play none none none'
+                    }
+                }
+            );
+        });
+        
+        // Stats counter animation
+        document.querySelectorAll('.stat-value[data-target]').forEach(stat => {
+            const target = parseInt(stat.dataset.target);
+            gsap.fromTo(stat,
+                { textContent: 0 },
+                {
+                    textContent: target,
+                    duration: 2,
+                    ease: 'power2.out',
+                    snap: { textContent: 1 },
+                    scrollTrigger: {
+                        trigger: stat,
+                        start: 'top 85%',
+                        toggleActions: 'play none none none'
+                    }
+                }
+            );
+        });
+        
+        // Step cards stagger animation
+        gsap.fromTo('.step-card',
+            { opacity: 0, y: 60, rotateX: 15 },
+            {
+                opacity: 1,
+                y: 0,
+                rotateX: 0,
+                duration: 0.8,
+                stagger: 0.2,
+                scrollTrigger: {
+                    trigger: '.steps-grid',
+                    start: 'top 80%',
+                    toggleActions: 'play none none none'
+                }
+            }
+        );
+        
+        // LLM badges animation
+        gsap.fromTo('.llm-badge',
+            { opacity: 0, scale: 0.8 },
+            {
+                opacity: 1,
+                scale: 1,
+                duration: 0.5,
+                stagger: 0.1,
+                scrollTrigger: {
+                    trigger: '.badges-container',
+                    start: 'top 85%',
+                    toggleActions: 'play none none none'
+                }
+            }
+        );
+        
+        // 3D tilt effect on cards
+        function addTiltEffect(elements) {
+            elements.forEach(el => {
+                el.addEventListener('mousemove', (e) => {
+                    const rect = el.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    const rotateX = (y - centerY) / 10;
+                    const rotateY = (centerX - x) / 10;
+                    
+                    el.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-10px)`;
+                });
+                
+                el.addEventListener('mouseleave', () => {
+                    el.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateY(0)';
+                });
+            });
+        }
+        
+        addTiltEffect(document.querySelectorAll('.step-card, .llm-badge, .pricing-card'));
+        
+        // Copy code button
+        document.getElementById('copyBtn').addEventListener('click', async function() {
+            const code = `pip install truvem
+from truvem import Truvem
+
+client = Truvem(api_key="your_key")
+
+# Store a memory
+client.remember("agent-1", "User prefers dark mode")
+
+# Recall memories
+memories = client.recall("agent-1")`;
+            
+            try {
+                await navigator.clipboard.writeText(code);
+                this.textContent = 'Copied!';
+                this.classList.add('success');
+                setTimeout(() => {
+                    this.textContent = 'Copy';
+                    this.classList.remove('success');
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy:', err);
+            }
+        });
+        
+        // API Key form submission
+        document.getElementById('apiKeyForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const submitBtn = document.getElementById('submitBtn');
+            const resultDiv = document.getElementById('apiKeyResult');
+            const apiKeyText = document.getElementById('apiKeyText');
+            
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+            resultDiv.classList.remove('show', 'error');
+            
+            try {
+                const response = await fetch('https://truvem.onrender.com/v1/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email: email })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.api_key) {
+                    apiKeyText.textContent = data.api_key;
+                    resultDiv.classList.remove('error');
+                    resultDiv.classList.add('show');
+                    
+                    // Scroll to result
+                    resultDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else {
+                    throw new Error(data.message || 'Registration failed');
+                }
+            } catch (error) {
+                apiKeyText.textContent = error.message || 'Something went wrong. Please try again.';
+                resultDiv.classList.add('error', 'show');
+            } finally {
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
+            }
+        });
+        
+        // Copy API key button
+        document.getElementById('copyApiKeyBtn').addEventListener('click', async function() {
+            const apiKey = document.getElementById('apiKeyText').textContent;
+            
+            try {
+                await navigator.clipboard.writeText(apiKey);
+                this.textContent = 'Copied!';
+                this.classList.add('success');
+                setTimeout(() => {
+                    this.textContent = 'Copy';
+                    this.classList.remove('success');
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy:', err);
+            }
+        });
+        
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    // Close mobile menu if open
+                    document.getElementById('navLinks').classList.remove('active');
+                }
+            });
+        });
+        
+        // Hero content animation
+        gsap.from('.hero-badge', {
+            opacity: 0,
+            y: 20,
+            duration: 0.8,
+            delay: 0.2
+        });
+        
+        gsap.from('.hero h1', {
+            opacity: 0,
+            y: 30,
+            duration: 0.8,
+            delay: 0.4
+        });
+        
+        gsap.from('.hero-subtitle', {
+            opacity: 0,
+            y: 30,
+            duration: 0.8,
+            delay: 0.6
+        });
+        
+        gsap.from('.hero-buttons', {
+            opacity: 0,
+            y: 30,
+            duration: 0.8,
+            delay: 0.8
+        });
+    </script>
 </body>
-  </html>
+</html>
