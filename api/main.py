@@ -49,7 +49,7 @@ def check_key(x_api_key: Optional[str] = Header(None)):
 def root(request: Request):
     return {"name": "Truvem", "version": "0.2.0", "status": "ok"}
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 @limiter.limit("60/minute")
 def health(request: Request):
     return {"status": "healthy"}
