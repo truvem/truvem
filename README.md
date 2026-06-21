@@ -1,4 +1,4 @@
-markdown
+
 <p align="center">
   <img src="https://placehold.co/150x150/6366f1/ffffff?text=T" alt="Truvem" width="150" height="150">
 </p>
