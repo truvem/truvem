@@ -33,4 +33,20 @@ class Client:
         )
         return resp.json()
 
+    def forget(self, memory_id: str) -> dict:
+        resp = requests.delete(
+            f"{self.base_url}/v1/memory/forget",
+            json={"memory_id": memory_id},
+            headers=self.headers
+        )
+        return resp.json()
+
+    def search(self, agent_id: str, query: str) -> dict:
+        resp = requests.post(
+            f"{self.base_url}/v1/memory/search",
+            json={"agent_id": agent_id, "query": query},
+            headers=self.headers
+        )
+        return resp.json()
+
 Truvem = Client
