@@ -64,13 +64,23 @@ def health(request: Request):
 @app.post("/v1/register")
 @limiter.limit("10/minute")
 def register(request: Request, req: RegisterRequest):
-    existing = supabase.table("users").select("*").eq("email", req.email).execute()
-    if existing.data:
-        return {"status": "ok", "api_key": existing.data[0]["api_key"]}
+    ip = request.client.host
+
+    # Check if email already exists
+    existing_email = supabase.table("users").select("*").eq("email", req.email).execute()
+    if existing_email.data:
+        return {"status": "ok", "api_key": existing_email.data[0]["api_key"]}
+
+    # Check if IP already has a key
+    existing_ip = supabase.table("users").select("*").eq("ip_address", ip).execute()
+    if existing_ip.data:
+        raise HTTPException(status_code=429, detail="One API key per IP address allowed")
+
     api_key = "truvem_" + secrets.token_urlsafe(32)
     supabase.table("users").insert({
         "email": req.email,
-        "api_key": api_key
+        "api_key": api_key,
+        "ip_address": ip
     }).execute()
     return {"status": "ok", "api_key": api_key}
 
