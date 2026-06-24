@@ -1,600 +1,662 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Truvem — Persistent Memory Infrastructure for AI Agents</title>
-    <meta name="description" content="Give your AI agents persistent memory with just 2 API calls. Works with GPT-4, Claude, Gemini, Mistral, and Llama.">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Prism.js for syntax highlighting -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
-    
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --bg-primary: #0a0a0a;
-            --bg-secondary: #111111;
-            --bg-card: #161616;
-            --text-primary: #ffffff;
-            --text-secondary: #a1a1aa;
-            --accent-violet: #8b5cf6;
-            --accent-indigo: #6366f1;
-            --accent-gradient: linear-gradient(135deg, #8b5cf6, #6366f1);
-            --border-color: #27272a;
-            --success: #22c55e;
-            --error: #ef4444;
-        }
-        html { scroll-behavior: smooth; }
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            line-height: 1.6;
-            overflow-x: hidden;
-        }
-        .orb {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(100px);
-            opacity: 0.15;
-            pointer-events: none;
-            z-index: 0;
-        }
-        .orb-1 { width: 600px; height: 600px; background: var(--accent-violet); top: -200px; right: -200px; animation: float 20s ease-in-out infinite; }
-        .orb-2 { width: 500px; height: 500px; background: var(--accent-indigo); bottom: -150px; left: -150px; animation: float 25s ease-in-out infinite reverse; }
-        .orb-3 { width: 400px; height: 400px; background: #a855f7; top: 50%; left: 50%; transform: translate(-50%, -50%); animation: float 30s ease-in-out infinite; }
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0); }
-            25% { transform: translate(30px, -30px); }
-            50% { transform: translate(-20px, 20px); }
-            75% { transform: translate(20px, 30px); }
-        }
-        .nav {
-            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
-            padding: 1rem 2rem;
-            background: rgba(10, 10, 10, 0.8);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border-color);
-            transition: all 0.3s ease;
-        }
-        .nav.scrolled { padding: 0.75rem 2rem; }
-        .nav-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
-        .logo {
-            font-size: 1.5rem; font-weight: 800;
-            background: var(--accent-gradient);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-            letter-spacing: -0.02em;
-        }
-        .nav-links { display: flex; align-items: center; gap: 2rem; }
-        .nav-links a { color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: color 0.2s ease; }
-        .nav-links a:hover { color: var(--text-primary); }
-        .btn-primary {
-            background: var(--accent-gradient); color: white;
-            padding: 0.6rem 1.25rem; border-radius: 8px; border: none;
-            font-weight: 600; font-size: 0.9rem; cursor: pointer;
-            transition: all 0.3s ease; text-decoration: none;
-        }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(139, 92, 246, 0.3); }
-        .btn-secondary {
-            background: transparent; color: var(--text-primary);
-            padding: 0.6rem 1.25rem; border-radius: 8px;
-            border: 1px solid var(--border-color);
-            font-weight: 600; font-size: 0.9rem; cursor: pointer;
-            transition: all 0.3s ease; text-decoration: none;
-        }
-        .btn-secondary:hover { border-color: var(--accent-violet); background: rgba(139, 92, 246, 0.1); }
-        .mobile-menu-btn { display: none; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
-        .hero {
-            position: relative; min-height: 100vh;
-            display: flex; align-items: center; justify-content: center;
-            padding: 8rem 2rem 4rem; overflow: hidden;
-        }
-        #hero-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
-        .hero-content { position: relative; z-index: 2; text-align: center; max-width: 900px; }
-        .hero-badge {
-            display: inline-flex; align-items: center; gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            background: rgba(139, 92, 246, 0.1);
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            border-radius: 50px; font-size: 0.85rem;
-            color: var(--accent-violet); margin-bottom: 2rem;
-        }
-        .hero-badge span { animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        .hero h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 800; line-height: 1.1; margin-bottom: 1.5rem; letter-spacing: -0.03em; }
-        .hero h1 .gradient-text { background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .hero-subtitle { font-size: clamp(1rem, 2vw, 1.25rem); color: var(--text-secondary); margin-bottom: 2.5rem; max-width: 600px; margin-left: auto; margin-right: auto; }
-        .hero-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
-        .hero-buttons .btn-primary, .hero-buttons .btn-secondary { padding: 0.875rem 1.75rem; font-size: 1rem; }
-        .stats {
-            position: relative; z-index: 2; padding: 4rem 2rem;
-            border-top: 1px solid var(--border-color);
-            border-bottom: 1px solid var(--border-color);
-            background: rgba(10, 10, 10, 0.5);
-        }
-        .stats-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; }
-        .stat-item { text-align: center; padding: 1.5rem; }
-        .stat-value { font-size: 2.5rem; font-weight: 800; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.5rem; }
-        .stat-label { color: var(--text-secondary); font-size: 0.9rem; }
-        .code-section { position: relative; z-index: 2; padding: 6rem 2rem; }
-        .section-container { max-width: 1200px; margin: 0 auto; }
-        .section-header { text-align: center; margin-bottom: 4rem; }
-        .section-header h2 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; margin-bottom: 1rem; letter-spacing: -0.02em; }
-        .section-header p { color: var(--text-secondary); font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
-        .code-demo { max-width: 700px; margin: 0 auto; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); overflow: hidden; }
-        .code-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-color); }
-        .code-dots { display: flex; gap: 0.5rem; }
-        .code-dot { width: 12px; height: 12px; border-radius: 50%; }
-        .code-dot:nth-child(1) { background: #ff5f57; }
-        .code-dot:nth-child(2) { background: #ffbd2e; }
-        .code-dot:nth-child(3) { background: #28ca42; }
-        .copy-btn { background: rgba(139,92,246,0.2); border: 1px solid rgba(139,92,246,0.3); color: var(--accent-violet); padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s ease; font-weight: 500; }
-        .copy-btn:hover { background: rgba(139,92,246,0.3); }
-        .copy-btn.success { background: rgba(34,197,94,0.2); border-color: rgba(34,197,94,0.3); color: var(--success); }
-        .code-content { padding: 1.5rem; overflow-x: auto; }
-        .code-content pre { margin: 0; background: transparent !important; }
-        .code-content code { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.9rem; line-height: 1.8; }
-        .how-it-works { position: relative; z-index: 2; padding: 6rem 2rem; background: var(--bg-secondary); }
-        .steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; max-width: 1000px; margin: 0 auto; }
-        .step-card { position: relative; padding: 2.5rem; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); text-align: center; transition: all 0.4s ease; transform-style: preserve-3d; perspective: 1000px; }
-        .step-card:hover { transform: translateY(-10px); border-color: var(--accent-violet); box-shadow: 0 20px 60px rgba(139,92,246,0.15); }
-        .step-icon { width: 80px; height: 80px; margin: 0 auto 1.5rem; background: var(--accent-gradient); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 2rem; }
-        .step-number { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background: var(--accent-gradient); color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; }
-        .step-card h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.75rem; }
-        .step-card p { color: var(--text-secondary); font-size: 0.95rem; }
-        .compatibility { position: relative; z-index: 2; padding: 6rem 2rem; }
-        .badges-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.5rem; max-width: 800px; margin: 0 auto; }
-        .llm-badge { display: flex; align-items: center; gap: 0.75rem; padding: 1rem 1.5rem; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-color); transition: all 0.3s ease; }
-        .llm-badge:hover { transform: translateY(-5px); border-color: var(--accent-violet); box-shadow: 0 10px 30px rgba(139,92,246,0.2); }
-        .llm-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; background: rgba(139,92,246,0.1); overflow: hidden; }
-        .llm-icon img { width: 32px; height: 32px; object-fit: contain; }
-        .llm-name { font-weight: 600; font-size: 1rem; }
-        .pricing { position: relative; z-index: 2; padding: 6rem 2rem; background: var(--bg-secondary); }
-        .pricing-card { max-width: 450px; margin: 0 auto; background: var(--bg-card); border-radius: 24px; border: 1px solid var(--accent-violet); padding: 3rem; text-align: center; position: relative; overflow: hidden; }
-        .pricing-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--accent-gradient); }
-        .pricing-popular { position: absolute; top: 1rem; right: 1rem; background: var(--accent-gradient); color: white; padding: 0.25rem 0.75rem; border-radius: 50px; font-size: 0.75rem; font-weight: 600; }
-        .pricing-name { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
-        .pricing-price { font-size: 3.5rem; font-weight: 800; margin: 1rem 0; }
-        .pricing-price span { font-size: 1rem; font-weight: 500; color: var(--text-secondary); }
-        .pricing-features { list-style: none; text-align: left; margin: 2rem 0; }
-        .pricing-features li { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); }
-        .pricing-features li:last-child { border-bottom: none; }
-        .pricing-features li::before { content: '✓'; color: var(--success); font-weight: 700; }
-        .pricing-cta { width: 100%; padding: 1rem; font-size: 1rem; }
-        .pricing-note { margin-top: 1.5rem; color: var(--text-secondary); font-size: 0.9rem; }
-        .get-api-key { position: relative; z-index: 2; padding: 6rem 2rem; }
-        .api-key-form { max-width: 500px; margin: 0 auto; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); padding: 2.5rem; }
-        .form-group { margin-bottom: 1.5rem; }
-        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; }
-        .form-group input { width: 100%; padding: 0.875rem 1rem; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 10px; color: white; font-size: 1rem; font-family: inherit; transition: all 0.2s ease; }
-        .form-group input:focus { outline: none; border-color: var(--accent-violet); box-shadow: 0 0 0 3px rgba(139,92,246,0.2); }
-        .form-group input::placeholder { color: var(--text-secondary); }
-        .submit-btn { width: 100%; padding: 1rem; font-size: 1rem; }
-        .api-key-result { display: none; margin-top: 1.5rem; padding: 1.5rem; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); border-radius: 10px; }
-        .api-key-result.show { display: block; animation: fadeIn 0.3s ease; }
-        .api-key-result.error { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); }
-        .api-key-label { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
-        .api-key-display { display: flex; align-items: center; gap: 1rem; background: var(--bg-primary); padding: 1rem; border-radius: 8px; margin-top: 0.5rem; }
-        .api-key-text { flex: 1; font-family: monospace; font-size: 0.9rem; word-break: break-all; color: var(--success); }
-        .api-key-result.error .api-key-text { color: var(--error); }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        .footer { position: relative; z-index: 2; padding: 4rem 2rem; border-top: 1px solid var(--border-color); background: var(--bg-secondary); }
-        .footer-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 2rem; }
-        .footer-logo { font-size: 1.5rem; font-weight: 800; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .footer-links { display: flex; gap: 2rem; flex-wrap: wrap; align-items: center; }
-        .footer-links a { color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s ease; }
-        .footer-links a:hover { color: var(--text-primary); }
-        .footer-email { color: var(--text-secondary); font-size: 0.9rem; }
-        .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s ease; }
-        .reveal.active { opacity: 1; transform: translateY(0); }
-        .loading { display: none; width: 20px; height: 20px; border: 2px solid transparent; border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @media (max-width: 768px) {
-            .nav-links { display: none; position: absolute; top: 100%; left: 0; right: 0; background: rgba(10,10,10,0.98); padding: 1.5rem; flex-direction: column; border-bottom: 1px solid var(--border-color); }
-            .nav-links.active { display: flex; }
-            .mobile-menu-btn { display: block; }
-            .stats-container { grid-template-columns: repeat(2, 1fr); }
-            .steps-grid { grid-template-columns: 1fr; }
-            .hero h1 { font-size: 2.5rem; }
-            .footer-container { flex-direction: column; text-align: center; }
-            .footer-links { justify-content: center; }
-        }
-        @media (max-width: 480px) {
-            .stats-container { grid-template-columns: 1fr; }
-            .hero-buttons { flex-direction: column; width: 100%; }
-            .hero-buttons a { width: 100%; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Truvem — Memory for AI Agents</title>
+  <meta name="description" content="Persistent memory for AI agents. Two API calls. Any model. Free.">
+  <meta property="og:title" content="Truvem — Memory for AI Agents">
+  <meta property="og:description" content="Persistent memory for AI agents. Two API calls. Any model.">
+  <meta property="og:url" content="https://truvem.github.io/truvem">
+  <meta property="og:type" content="website">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #0a0a0a;
+      --bg2: #111118;
+      --bg3: #1a1a28;
+      --violet: #7c3aed;
+      --violet-light: #a78bfa;
+      --violet-dim: rgba(124,58,237,0.15);
+      --white: #ffffff;
+      --gray: #a1a1aa;
+      --gray-dim: #52525b;
+      --border: rgba(255,255,255,0.08);
+      --border-hover: rgba(124,58,237,0.4);
+      --font: 'Inter', system-ui, -apple-system, sans-serif;
+      --mono: 'JetBrains Mono', 'Courier New', monospace;
+    }
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+    body { font-family: var(--font); background: var(--bg); color: var(--white); line-height: 1.6; overflow-x: hidden; }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      background: rgba(10,10,10,0.85); border-bottom: 1px solid var(--border);
+      padding: 0 32px; height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700; font-size: 17px; letter-spacing: -0.3px;
+      text-decoration: none; color: var(--white);
+    }
+    .nav-links { display: flex; gap: 28px; align-items: center; }
+    .nav-links a { color: var(--gray); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--white); }
+    .nav-cta {
+      background: var(--violet) !important; color: white !important;
+      padding: 8px 18px; border-radius: 8px;
+      font-weight: 600 !important; font-size: 13px !important;
+      transition: opacity 0.2s !important;
+    }
+    .nav-cta:hover { opacity: 0.85; }
+
+    /* LAYOUT */
+    .container { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+    .divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 0 24px; }
+
+    /* HERO */
+    .hero { padding: 140px 24px 80px; max-width: 1000px; margin: 0 auto; text-align: center; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--violet-dim); border: 1px solid rgba(124,58,237,0.3);
+      padding: 6px 16px; border-radius: 100px;
+      font-size: 12px; font-weight: 700; color: var(--violet-light);
+      letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 32px;
+    }
+    .live-dot {
+      width: 6px; height: 6px; background: #4ade80; border-radius: 50%;
+      animation: blink 2s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .hero h1 {
+      font-size: clamp(40px, 8vw, 80px); font-weight: 900;
+      line-height: 1.04; letter-spacing: -2.5px; margin-bottom: 24px;
+      background: linear-gradient(140deg, #fff 0%, #c4b5fd 55%, #7c3aed 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero p { font-size: clamp(15px, 2.5vw, 19px); color: var(--gray); max-width: 480px; margin: 0 auto 40px; line-height: 1.75; }
+    .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn-primary {
+      background: var(--violet); color: white; padding: 14px 28px;
+      border-radius: 10px; font-size: 15px; font-weight: 600;
+      text-decoration: none; transition: transform 0.15s, box-shadow 0.15s;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 32px rgba(124,58,237,0.4); }
+    .btn-secondary {
+      background: transparent; color: var(--gray); padding: 14px 28px;
+      border-radius: 10px; font-size: 15px; font-weight: 500;
+      text-decoration: none; border: 1px solid var(--border);
+      transition: border-color 0.2s, color 0.2s;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-secondary:hover { border-color: var(--border-hover); color: var(--white); }
+
+    /* STATS */
+    .stats { padding: 0 24px 80px; max-width: 1000px; margin: 0 auto; }
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(4,1fr);
+      gap: 1px; background: var(--border);
+      border: 1px solid var(--border); border-radius: 20px; overflow: hidden;
+    }
+    .stat-item { background: var(--bg2); padding: 28px 20px; text-align: center; }
+    .stat-number { font-size: 34px; font-weight: 900; letter-spacing: -1.5px; line-height: 1; margin-bottom: 6px; }
+    .stat-label { font-size: 11px; color: var(--gray-dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; }
+
+    /* SECTION HEADINGS */
+    .section-wrap { padding: 80px 24px; max-width: 1000px; margin: 0 auto; }
+    .section-label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--violet-light); margin-bottom: 12px; }
+    .section-title { font-size: clamp(26px, 5vw, 42px); font-weight: 800; letter-spacing: -1.5px; line-height: 1.1; margin-bottom: 14px; }
+    .section-sub { font-size: 16px; color: var(--gray); max-width: 500px; line-height: 1.75; }
+
+    /* CODE */
+    .code-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
+    .code-block {
+      background: #0c0c15; border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
+    }
+    .code-header {
+      display: flex; align-items: center; gap: 7px; padding: 14px 18px;
+      border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02);
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-r{background:#ff5f56} .dot-y{background:#ffbd2e} .dot-g{background:#27c93f}
+    .code-fname { font-size: 12px; color: var(--gray-dim); margin-left: 8px; font-family: var(--mono); }
+    pre { padding: 24px; font-family: var(--mono); font-size: 13px; line-height: 1.9; overflow-x: auto; }
+    .kw{color:#c792ea} .fn{color:#82aaff} .st{color:#c3e88d} .cm{color:#546e7a;font-style:italic} .nm{color:#ffcb6b} .op{color:#89ddff}
+    .status-row { display: flex; align-items: center; gap: 8px; margin-top: 24px; }
+    .status-green { width: 7px; height: 7px; background: #4ade80; border-radius: 50%; animation: blink 2s infinite; }
+    .status-text { font-size: 13px; color: #4ade80; font-weight: 600; }
+
+    /* HOW IT WORKS */
+    .steps { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin-top: 48px; }
+    .step {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 16px;
+      padding: 28px 24px; transition: border-color 0.25s, transform 0.2s;
+    }
+    .step:hover { border-color: var(--border-hover); transform: translateY(-3px); }
+    .step-num {
+      width: 38px; height: 38px; border-radius: 10px;
+      background: var(--violet-dim); border: 1px solid rgba(124,58,237,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800; color: var(--violet-light); margin-bottom: 18px;
+    }
+    .step h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.3px; }
+    .step p { font-size: 14px; color: var(--gray); line-height: 1.7; }
+    .inline-code { background: rgba(124,58,237,0.15); padding: 2px 7px; border-radius: 5px; font-family: var(--mono); font-size: 12px; color: var(--violet-light); }
+
+    /* MODELS */
+    .models-flex { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 44px; }
+    .model-chip {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 14px;
+      padding: 13px 18px; transition: border-color 0.2s, transform 0.18s; cursor: default;
+    }
+    .model-chip:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+    .model-icon {
+      width: 36px; height: 36px; border-radius: 9px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .model-name { font-size: 14px; font-weight: 700; color: var(--white); }
+    .model-maker { font-size: 11px; color: var(--gray-dim); margin-top: 1px; font-weight: 500; }
+
+    /* PRICING */
+    .pricing-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 24px; padding: 48px; text-align: center;
+      max-width: 460px; margin: 48px auto 0; position: relative; overflow: hidden;
+    }
+    .pricing-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--violet), transparent);
+    }
+    .pricing-badge {
+      display: inline-block; background: var(--violet-dim);
+      border: 1px solid rgba(124,58,237,0.3); color: var(--violet-light);
+      font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+      padding: 4px 14px; border-radius: 100px; margin-bottom: 24px;
+    }
+    .pricing-price { font-size: 76px; font-weight: 900; letter-spacing: -4px; line-height: 1; margin-bottom: 6px; }
+    .pricing-period { font-size: 14px; color: var(--gray-dim); margin-bottom: 32px; }
+    .pricing-features { text-align: left; margin-bottom: 32px; }
+    .pf {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 0; font-size: 14px; color: var(--gray);
+      border-bottom: 1px solid var(--border);
+    }
+    .pf:last-child { border-bottom: none; }
+    .pf svg { flex-shrink: 0; color: var(--violet-light); }
+
+    /* FORM */
+    .form-section { text-align: center; padding: 80px 24px; max-width: 1000px; margin: 0 auto; }
+    .api-form { display: flex; gap: 10px; max-width: 440px; margin: 36px auto 0; }
+    .api-form input {
+      flex: 1; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 14px 18px; font-size: 14px; color: var(--white); outline: none;
+      font-family: var(--font); transition: border-color 0.2s;
+    }
+    .api-form input:focus { border-color: var(--violet); }
+    .api-form input::placeholder { color: var(--gray-dim); }
+    .api-form button {
+      background: var(--violet); color: white; border: none; border-radius: 10px;
+      padding: 14px 20px; font-size: 14px; font-weight: 600; cursor: pointer;
+      font-family: var(--font); transition: opacity 0.2s; white-space: nowrap;
+    }
+    .api-form button:hover { opacity: 0.85; }
+    .api-form button:disabled { opacity: 0.45; cursor: not-allowed; }
+    .key-box {
+      display: none; margin: 20px auto 0; max-width: 440px;
+      background: rgba(34,197,94,0.07); border: 1px solid rgba(34,197,94,0.25);
+      border-radius: 14px; padding: 18px 20px;
+    }
+    .key-box.show { display: block; }
+    .key-label { font-size: 11px; color: #4ade80; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; }
+    .key-row { display: flex; align-items: center; gap: 10px; }
+    .key-val { flex: 1; font-family: var(--mono); font-size: 12px; color: var(--white); background: rgba(0,0,0,0.4); padding: 10px 12px; border-radius: 8px; word-break: break-all; }
+    .copy-btn {
+      background: rgba(124,58,237,0.2); color: var(--violet-light);
+      border: 1px solid rgba(124,58,237,0.35); border-radius: 8px;
+      padding: 8px 14px; font-size: 12px; font-weight: 700; cursor: pointer;
+      font-family: var(--font); transition: background 0.2s; white-space: nowrap;
+    }
+    .copy-btn:hover { background: rgba(124,58,237,0.35); }
+    .err-box {
+      display: none; margin: 20px auto 0; max-width: 440px;
+      background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3);
+      color: #f87171; padding: 12px 16px; border-radius: 10px; font-size: 13px;
+    }
+    .err-box.show { display: block; }
+    .hint { margin-top: 16px; font-size: 12px; color: var(--gray-dim); }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 44px 32px; max-width: 1000px; margin: 0 auto;
+      display: flex; align-items: flex-start; justify-content: space-between;
+      flex-wrap: wrap; gap: 24px;
+    }
+    .footer-logo { font-weight: 700; font-size: 16px; margin-bottom: 6px; }
+    .footer-copy { font-size: 12px; color: var(--gray-dim); margin-bottom: 8px; }
+    .footer-links { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+    .footer-links a { color: var(--gray-dim); font-size: 13px; text-decoration: none; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--white); }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      .code-grid { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: repeat(2,1fr); }
+      .nav-links a:not(.nav-cta) { display: none; }
+      footer { flex-direction: column; }
+    }
+    @media (max-width: 480px) {
+      .api-form { flex-direction: column; }
+      .pricing-card { padding: 32px 20px; }
+      nav { padding: 0 16px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
 </head>
 <body>
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
 
-    <!-- Navigation -->
-    <nav class="nav" id="nav">
-        <div class="nav-container">
-            <a href="#" class="logo">Truvem</a>
-            <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
-            <div class="nav-links" id="navLinks">
-                <a href="https://truvem.onrender.com/docs">Docs</a>
-                <a href="https://github.com/truvem/truvem">GitHub</a>
-                <a href="#pricing">Pricing</a>
-                <a href="#get-api-key" class="btn-primary">Get API Key</a>
-            </div>
-        </div>
-    </nav>
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect width="28" height="28" rx="7" fill="#7c3aed"/>
+      <circle cx="14" cy="14" r="3" fill="white"/>
+      <line x1="14" y1="4" x2="14" y2="10.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="14" y1="17.5" x2="14" y2="24" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="4" y1="14" x2="10.5" y2="14" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="17.5" y1="14" x2="24" y2="14" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="7.5" y1="7.5" x2="11.2" y2="11.2" stroke="rgba(255,255,255,0.45)" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="16.8" y1="16.8" x2="20.5" y2="20.5" stroke="rgba(255,255,255,0.45)" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="20.5" y1="7.5" x2="16.8" y2="11.2" stroke="rgba(255,255,255,0.45)" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="11.2" y1="16.8" x2="7.5" y2="20.5" stroke="rgba(255,255,255,0.45)" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>
+    Truvem
+  </a>
+  <div class="nav-links">
+    <a href="#how">How it works</a>
+    <a href="https://truvem.onrender.com/docs" target="_blank">Docs</a>
+    <a href="#get-key" class="nav-cta">Get API Key →</a>
+  </div>
+</nav>
 
-    <!-- Hero -->
-    <section class="hero" id="hero">
-        <canvas id="hero-canvas"></canvas>
-        <div class="hero-content">
-            <div class="hero-badge"><span>●</span> Now in Public Beta</div>
-            <h1>Your AI agents<br>finally have <span class="gradient-text">memory</span>.</h1>
-            <p class="hero-subtitle">Two API calls. Any model. Persistent.<br>Give your agents the context they deserve.</p>
-            <div class="hero-buttons">
-                <a href="https://truvem.onrender.com/docs" class="btn-primary">Get Started Free →</a>
-                <a href="https://github.com/truvem/truvem" class="btn-secondary">View on GitHub</a>
-            </div>
-        </div>
-    </section>
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">
+    <span class="live-dot"></span>
+    API Live
+  </div>
+  <h1>Your AI agents<br>finally have memory.</h1>
+  <p>Two API calls. Any model. Persistent memory across sessions, machines, and frameworks.</p>
+  <div class="hero-actions">
+    <a href="#get-key" class="btn-primary">
+      Get free API key
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7.5 3.5L11 7l-3.5 3.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+    <a href="https://truvem.onrender.com/docs" target="_blank" class="btn-secondary">
+      View API docs
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 10L10 2M10 2H5M10 2v5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </a>
+  </div>
+</section>
 
-    <!-- Stats -->
-    <section class="stats" id="stats">
-        <div class="stats-container">
-            <div class="stat-item reveal"><div class="stat-value" data-target="2">0</div><div class="stat-label">API calls</div></div>
-            <div class="stat-item reveal"><div class="stat-value" data-target="5">0</div><div class="stat-label">LLMs supported</div></div>
-            <div class="stat-item reveal"><div class="stat-value" data-target="100">0</div><div class="stat-label">&lt;ms latency</div></div>
-            <div class="stat-item reveal"><div class="stat-value">∞</div><div class="stat-label">Free forever</div></div>
-        </div>
-    </section>
+<!-- STATS -->
+<div class="stats">
+  <div class="stats-grid">
+    <div class="stat-item">
+      <div class="stat-number">2</div>
+      <div class="stat-label">API calls</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">5+</div>
+      <div class="stat-label">LLMs supported</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">&lt;100<small style="font-size:16px">ms</small></div>
+      <div class="stat-label">Response time</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">$0</div>
+      <div class="stat-label">During MVP</div>
+    </div>
+  </div>
+</div>
 
-    <!-- Code Demo -->
-    <section class="code-section" id="code">
-        <div class="section-container">
-            <div class="section-header reveal">
-                <h2>Dead simple integration</h2>
-                <p>Two lines of code. That's all it takes to give your agents persistent memory.</p>
-            </div>
-            <div class="code-demo reveal">
-                <div class="code-header">
-                    <div class="code-dots">
-                        <div class="code-dot"></div>
-                        <div class="code-dot"></div>
-                        <div class="code-dot"></div>
-                    </div>
-                    <button class="copy-btn" id="copyBtn">Copy</button>
-                </div>
-                <div class="code-content">
-                    <pre><code class="language-python" id="codeBlock">pip install truvem
-from truvem import Truvem
+<div class="divider"></div>
 
-client = Truvem(api_key="your_key")
+<!-- CODE DEMO -->
+<div class="section-wrap">
+  <div class="code-grid">
+    <div>
+      <div class="section-label">Dead simple</div>
+      <h2 class="section-title">Memory in 3 lines of Python.</h2>
+      <p class="section-sub">Register once. Write memories. Read them back — from any session, any model, any machine.</p>
+      <div class="status-row">
+        <div class="status-green"></div>
+        <span class="status-text">API live · truvem.onrender.com</span>
+      </div>
+    </div>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="dot dot-r"></div>
+        <div class="dot dot-y"></div>
+        <div class="dot dot-g"></div>
+        <span class="code-fname">truvem_demo.py</span>
+      </div>
+      <pre><span class="kw">from</span> <span class="nm">truvem</span> <span class="kw">import</span> <span class="fn">Truvem</span>
 
-# Store a memory
-client.remember("agent-1", "User prefers dark mode")
+<span class="cm"># One-time setup</span>
+<span class="nm">client</span> <span class="op">=</span> <span class="fn">Truvem</span>(<span class="nm">api_key</span><span class="op">=</span><span class="st">"your_key"</span>)
 
-# Recall memories
-memories = client.recall("agent-1")</code></pre>
-                </div>
-            </div>
-        </div>
-    </section>
+<span class="cm"># Save a memory</span>
+<span class="nm">client</span><span class="op">.</span><span class="fn">remember</span>(
+  <span class="nm">agent_id</span><span class="op">=</span><span class="st">"my-agent"</span>,
+  <span class="nm">content</span><span class="op">=</span><span class="st">"User prefers dark mode"</span>
+)
 
-    <!-- How It Works -->
-    <section class="how-it-works" id="how-it-works">
-        <div class="section-container">
-            <div class="section-header reveal">
-                <h2>How it works</h2>
-                <p>Three simple steps to persistent AI memory</p>
-            </div>
-            <div class="steps-grid">
-                <div class="step-card reveal">
-                    <div class="step-number">1</div>
-                    <div class="step-icon">📦</div>
-                    <h3>Install SDK</h3>
-                    <p>One command to install. Works with Python, Node.js, and more coming soon.</p>
-                </div>
-                <div class="step-card reveal">
-                    <div class="step-number">2</div>
-                    <div class="step-icon">💾</div>
-                    <h3>Write Memory</h3>
-                    <p>Store any context your agent needs. User preferences, past conversations, learned facts.</p>
-                </div>
-                <div class="step-card reveal">
-                    <div class="step-number">3</div>
-                    <div class="step-icon">🧠</div>
-                    <h3>Recall Anytime</h3>
-                    <p>Retrieve relevant memories in &lt;100ms. Your agents finally remember.</p>
-                </div>
-            </div>
-        </div>
-    </section>
+<span class="cm"># Recall — any session, any model</span>
+<span class="nm">memories</span> <span class="op">=</span> <span class="nm">client</span><span class="op">.</span><span class="fn">recall</span>(<span class="st">"my-agent"</span>)
+<span class="nm">print</span>(<span class="nm">memories</span>)
+<span class="cm"># {"status":"ok","memories":[...]}</span></pre>
+    </div>
+  </div>
+</div>
 
-    <!-- Compatibility -->
-    <section class="compatibility" id="compatibility">
-        <div class="section-container">
-            <div class="section-header reveal">
-                <h2>Works with your favorite models</h2>
-                <p>Truvem is model-agnostic. Use it with any LLM.</p>
-            </div>
-            <div class="badges-container">
-                <div class="llm-badge reveal">
-                    <div class="llm-icon">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg" alt="GPT-4">
-                    </div>
-                    <span class="llm-name">GPT-4</span>
-                </div>
-                <div class="llm-badge reveal">
-                    <div class="llm-icon" style="background:#d4a574;">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/8/8a/Claude_AI_logo.svg" alt="Claude">
-                    </div>
-                    <span class="llm-name">Claude</span>
-                </div>
-                <div class="llm-badge reveal">
-                    <div class="llm-icon" style="background:white;">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/8/8e/Google_Gemini_logo.svg" alt="Gemini">
-                    </div>
-                    <span class="llm-name">Gemini</span>
-                </div>
-                <div class="llm-badge reveal">
-                    <div class="llm-icon" style="background:#ff7000;">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/e/e6/Mistral_AI_logo_%282025%29.svg" alt="Mistral">
-                    </div>
-                    <span class="llm-name">Mistral</span>
-                </div>
-                <div class="llm-badge reveal">
-                    <div class="llm-icon" style="background:#0668E1;">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg" alt="Llama">
-                    </div>
-                    <span class="llm-name">Llama</span>
-                </div>
-            </div>
-        </div>
-    </section>
+<div class="divider"></div>
 
-    <!-- Pricing -->
-    <section class="pricing" id="pricing">
-        <div class="section-container">
-            <div class="section-header reveal">
-                <h2>Simple, transparent pricing</h2>
-                <p>Start free. Scale when you're ready.</p>
-            </div>
-            <div class="pricing-card reveal">
-                <div class="pricing-popular">Current Plan</div>
-                <div class="pricing-name">Free</div>
-                <div class="pricing-price">$0<span>/month</span></div>
-                <ul class="pricing-features">
-                    <li>Unlimited remember calls</li>
-                    <li>Unlimited recall calls</li>
-                    <li>All supported LLMs</li>
-                    <li>100ms latency SLA</li>
-                    <li>Community support</li>
-                </ul>
-                <a href="#get-api-key" class="btn-primary pricing-cta">Get API Key</a>
-                <p class="pricing-note">Paid plans coming soon with enhanced features</p>
-            </div>
-        </div>
-    </section>
+<!-- HOW IT WORKS -->
+<div class="section-wrap" id="how">
+  <div class="section-label">How it works</div>
+  <h2 class="section-title">Simple by design.</h2>
+  <p class="section-sub">No config. No embeddings. No infrastructure to manage. Just memory.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h3>Register your email</h3>
+      <p>Enter your email and get a unique API key instantly. No credit card, no verification email.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h3>Write a memory</h3>
+      <p>Call <span class="inline-code">/memory/write</span> with an <code style="font-family:var(--mono);font-size:12px">agent_id</code> and any string. That's it.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h3>Recall anywhere</h3>
+      <p>Call <span class="inline-code">/memory/read</span> from any session, model, or device. Memory persists forever.</p>
+    </div>
+  </div>
+</div>
 
-    <!-- Get API Key -->
-    <section class="get-api-key" id="get-api-key">
-        <div class="section-container">
-            <div class="section-header reveal">
-                <h2>Get your API key</h2>
-                <p>Start building with persistent memory in seconds</p>
-            </div>
-            <div class="api-key-form reveal">
-                <form id="apiKeyForm">
-                    <div class="form-group">
-                        <label for="email">Email address</label>
-                        <input type="email" id="email" name="email" placeholder="you@example.com" required>
-                    </div>
-                    <button type="submit" class="btn-primary submit-btn" id="submitBtn">
-                        <span>Get API Key</span>
-                        <div class="loading"></div>
-                    </button>
-                </form>
-                <div class="api-key-result" id="apiKeyResult">
-                    <div class="api-key-label">Your API Key:</div>
-                    <div class="api-key-display">
-                        <span class="api-key-text" id="apiKeyText"></span>
-                        <button class="copy-btn" id="copyApiKeyBtn">Copy</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+<div class="divider"></div>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-container">
-            <div class="footer-logo">Truvem</div>
-            <div class="footer-links">
-                <a href="https://truvem.onrender.com/docs">Docs</a>
-                <a href="https://github.com/truvem/truvem">GitHub</a>
-                <a href="mailto:gettruvem@gmail.com">gettruvem@gmail.com</a>
-                <a href="https://www.shipit.buzz/products/truvem?ref=badge" target="_blank" rel="noopener noreferrer">
-                    <img src="https://www.shipit.buzz/api/products/truvem/badge?theme=dark" alt="Featured on Shipit" style="height:32px;vertical-align:middle;">
-                </a>
-            </div>
-        </div>
-    </footer>
+<!-- MODELS -->
+<div class="section-wrap">
+  <div class="section-label">Compatibility</div>
+  <h2 class="section-title">Works with every major model.</h2>
+  <p class="section-sub">Model-agnostic by design. Pure REST — works with any language or framework.</p>
+  <div class="models-flex">
 
-    <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <!-- OpenAI GPT-4 -->
+    <div class="model-chip">
+      <div class="model-icon" style="background:#000;border:1px solid #333">
+        <svg width="22" height="22" viewBox="0 0 41 41" fill="white">
+          <path d="M37.532 16.87a9.963 9.963 0 0 0-.856-8.184 10.078 10.078 0 0 0-10.855-4.835 9.964 9.964 0 0 0-6.205-2.439 10.079 10.079 0 0 0-9.612 6.977 9.967 9.967 0 0 0-6.69 4.839 10.081 10.081 0 0 0 1.24 11.817 9.965 9.965 0 0 0 .856 8.185 10.079 10.079 0 0 0 10.855 4.835 9.965 9.965 0 0 0 6.205 2.439 10.079 10.079 0 0 0 9.617-6.981 9.967 9.967 0 0 0 6.69-4.839 10.081 10.081 0 0 0-1.245-11.813zm-14.6 14.553a7.467 7.467 0 0 1-4.802-1.738l.286-.164 7.654-4.421a1.25 1.25 0 0 0 .633-1.088v-10.79l3.235 1.867a.119.119 0 0 1 .064.092v8.939a7.504 7.504 0 0 1-7.07 7.303zm-15.191-6.946a7.471 7.471 0 0 1-.894-5.023l.287.176 7.654 4.421a1.25 1.25 0 0 0 1.264 0l9.34-5.394v3.734a.12.12 0 0 1-.047.1l-7.74 4.47a7.504 7.504 0 0 1-10.864-2.484zm-2.007-17.168A7.471 7.471 0 0 1 10.6 5.1l-.014.16v8.847a1.25 1.25 0 0 0 .63 1.088l9.34 5.394-3.237 1.869a.119.119 0 0 1-.113.012L9.468 17.987a7.502 7.502 0 0 1-3.734-10.678zm26.702 6.435l-9.34-5.394 3.237-1.867a.119.119 0 0 1 .113-.012l7.74 4.47a7.502 7.502 0 0 1-1.158 13.528v-9.006a1.25 1.25 0 0 0-.592-1.719zm3.224-5.063a7.44 7.44 0 0 0-.287-.176l-7.654-4.421a1.25 1.25 0 0 0-1.264 0l-9.34 5.394V10.7a.12.12 0 0 1 .047-.1l7.74-4.47a7.504 7.504 0 0 1 11.158 7.772zm-20.26 6.667l-3.237-1.869a.12.12 0 0 1-.064-.092v-8.939a7.504 7.504 0 0 1 12.296-5.756l-.287.164-7.654 4.421a1.25 1.25 0 0 0-.633 1.088l-.421 10.983zm1.757-3.781l4.155-2.4 4.156 2.398v4.798l-4.155 2.4-4.156-2.4z"/>
+        </svg>
+      </div>
+      <div>
+        <div class="model-name">GPT-4</div>
+        <div class="model-maker">OpenAI</div>
+      </div>
+    </div>
 
-    <script>
-        (function initNeuralNetwork() {
-            const canvas = document.getElementById('hero-canvas');
-            const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            const nodes = [];
-            const nodeCount = 80;
-            const nodeGeometry = new THREE.SphereGeometry(0.08, 16, 16);
-            const nodeMaterial = new THREE.MeshBasicMaterial({ color: 0x8b5cf6, transparent: true, opacity: 0.8 });
-            for (let i = 0; i < nodeCount; i++) {
-                const node = new THREE.Mesh(nodeGeometry, nodeMaterial.clone());
-                node.position.set((Math.random()-0.5)*20, (Math.random()-0.5)*15, (Math.random()-0.5)*10);
-                node.userData = { originalPosition: node.position.clone(), speed: Math.random()*0.5+0.5, offset: Math.random()*Math.PI*2 };
-                scene.add(node);
-                nodes.push(node);
-            }
-            const connectionMaterial = new THREE.LineBasicMaterial({ color: 0x6366f1, transparent: true, opacity: 0.15 });
-            const connections = [];
-            const maxDistance = 4;
-            function updateConnections() {
-                connections.forEach(conn => scene.remove(conn));
-                connections.length = 0;
-                for (let i = 0; i < nodes.length; i++) {
-                    for (let j = i+1; j < nodes.length; j++) {
-                        const distance = nodes[i].position.distanceTo(nodes[j].position);
-                        if (distance < maxDistance) {
-                            const geometry = new THREE.BufferGeometry().setFromPoints([nodes[i].position, nodes[j].position]);
-                            const line = new THREE.Line(geometry, connectionMaterial.clone());
-                            line.material.opacity = 0.15*(1-distance/maxDistance);
-                            scene.add(line);
-                            connections.push(line);
-                        }
-                    }
-                }
-            }
-            camera.position.z = 8;
-            let time = 0;
-            function animate() {
-                requestAnimationFrame(animate);
-                time += 0.01;
-                nodes.forEach((node) => {
-                    const { originalPosition, speed, offset } = node.userData;
-                    node.position.x = originalPosition.x + Math.sin(time*speed+offset)*0.3;
-                    node.position.y = originalPosition.y + Math.cos(time*speed+offset)*0.3;
-                    node.position.z = originalPosition.z + Math.sin(time*speed*0.5+offset)*0.2;
-                    node.material.opacity = 0.5+Math.sin(time*2+offset)*0.3;
-                    node.scale.setScalar(0.8+Math.sin(time*2+offset)*0.2);
-                });
-                updateConnections();
-                camera.position.x = Math.sin(time*0.1)*2;
-                camera.position.y = Math.cos(time*0.1)*1;
-                camera.lookAt(0,0,0);
-                renderer.render(scene, camera);
-            }
-            animate();
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth/window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            });
-        })();
+    <!-- Anthropic Claude -->
+    <div class="model-chip">
+      <div class="model-icon" style="background:#d97559">
+        <svg width="22" height="22" viewBox="0 0 100 100" fill="none">
+          <path d="M62 20L42 80h8l6-18h16l6 18h8L66 20h-4zm-2 36l7-21 7 21H60z" fill="white"/>
+        </svg>
+      </div>
+      <div>
+        <div class="model-name">Claude</div>
+        <div class="model-maker">Anthropic</div>
+      </div>
+    </div>
 
-        gsap.registerPlugin(ScrollTrigger);
-        window.addEventListener('scroll', () => {
-            const nav = document.getElementById('nav');
-            if (window.scrollY > 50) nav.classList.add('scrolled');
-            else nav.classList.remove('scrolled');
-        });
-        document.getElementById('mobileMenuBtn').addEventListener('click', () => {
-            document.getElementById('navLinks').classList.toggle('active');
-        });
-        const revealElements = document.querySelectorAll('.reveal');
-        revealElements.forEach((el, index) => {
-            gsap.fromTo(el, { opacity: 0, y: 50 }, {
-                opacity: 1, y: 0, duration: 0.8, delay: index*0.1,
-                scrollTrigger: { trigger: el, start: 'top 85%', toggleActions: 'play none none none' }
-            });
-        });
-        document.querySelectorAll('.stat-value[data-target]').forEach(stat => {
-            const target = parseInt(stat.dataset.target);
-            gsap.fromTo(stat, { textContent: 0 }, {
-                textContent: target, duration: 2, ease: 'power2.out', snap: { textContent: 1 },
-                scrollTrigger: { trigger: stat, start: 'top 85%', toggleActions: 'play none none none' }
-            });
-        });
-        gsap.fromTo('.step-card', { opacity: 0, y: 60, rotateX: 15 }, {
-            opacity: 1, y: 0, rotateX: 0, duration: 0.8, stagger: 0.2,
-            scrollTrigger: { trigger: '.steps-grid', start: 'top 80%', toggleActions: 'play none none none' }
-        });
-        gsap.fromTo('.llm-badge', { opacity: 0, scale: 0.8 }, {
-            opacity: 1, scale: 1, duration: 0.5, stagger: 0.1,
-            scrollTrigger: { trigger: '.badges-container', start: 'top 85%', toggleActions: 'play none none none' }
-        });
-        function addTiltEffect(elements) {
-            elements.forEach(el => {
-                el.addEventListener('mousemove', (e) => {
-                    const rect = el.getBoundingClientRect();
-                    const x = e.clientX-rect.left, y = e.clientY-rect.top;
-                    const rotateX = (y-rect.height/2)/10, rotateY = (rect.width/2-x)/10;
-                    el.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-10px)`;
-                });
-                el.addEventListener('mouseleave', () => { el.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateY(0)'; });
-            });
-        }
-        addTiltEffect(document.querySelectorAll('.step-card, .llm-badge, .pricing-card'));
-        document.getElementById('copyBtn').addEventListener('click', async function() {
-            const code = `pip install truvem\nfrom truvem import Truvem\n\nclient = Truvem(api_key="your_key")\n\n# Store a memory\nclient.remember("agent-1", "User prefers dark mode")\n\n# Recall memories\nmemories = client.recall("agent-1")`;
-            try {
-                await navigator.clipboard.writeText(code);
-                this.textContent = 'Copied!'; this.classList.add('success');
-                setTimeout(() => { this.textContent = 'Copy'; this.classList.remove('success'); }, 2000);
-            } catch (err) { console.error('Failed to copy:', err); }
-        });
-        document.getElementById('apiKeyForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const submitBtn = document.getElementById('submitBtn');
-            const resultDiv = document.getElementById('apiKeyResult');
-            const apiKeyText = document.getElementById('apiKeyText');
-            submitBtn.classList.add('loading'); submitBtn.disabled = true;
-            resultDiv.classList.remove('show', 'error');
-            try {
-                const response = await fetch('https://truvem.onrender.com/v1/register', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
-                const data = await response.json();
-                if (response.ok && data.api_key) {
-                    apiKeyText.textContent = data.api_key;
-                    resultDiv.classList.remove('error'); resultDiv.classList.add('show');
-                    resultDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                } else { throw new Error(data.message || 'Registration failed'); }
-            } catch (error) {
-                apiKeyText.textContent = error.message || 'Something went wrong. Please try again.';
-                resultDiv.classList.add('error', 'show');
-            } finally { submitBtn.classList.remove('loading'); submitBtn.disabled = false; }
-        });
-        document.getElementById('copyApiKeyBtn').addEventListener('click', async function() {
-            const apiKey = document.getElementById('apiKeyText').textContent;
-            try {
-                await navigator.clipboard.writeText(apiKey);
-                this.textContent = 'Copied!'; this.classList.add('success');
-                setTimeout(() => { this.textContent = 'Copy'; this.classList.remove('success'); }, 2000);
-            } catch (err) { console.error('Failed to copy:', err); }
-        });
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function(e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); document.getElementById('navLinks').classList.remove('active'); }
-            });
-        });
-        gsap.from('.hero-badge', { opacity: 0, y: 20, duration: 0.8, delay: 0.2 });
-        gsap.from('.hero h1', { opacity: 0, y: 30, duration: 0.8, delay: 0.4 });
-        gsap.from('.hero-subtitle', { opacity: 0, y: 30, duration: 0.8, delay: 0.6 });
-        gsap.from('.hero-buttons', { opacity: 0, y: 30, duration: 0.8, delay: 0.8 });
-    </script>
+    <!-- Google Gemini -->
+    <div class="model-chip">
+      <div class="model-icon" style="background:#fff;border:1px solid #eee">
+        <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
+          <defs>
+            <linearGradient id="g1" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#4285F4"/>
+              <stop offset="0.5" stop-color="#9B72CB"/>
+              <stop offset="1" stop-color="#EA4335"/>
+            </linearGradient>
+          </defs>
+          <path d="M14 3C14 3 14 14 3 14C14 14 14 25 14 25C14 25 14 14 25 14C14 14 14 3 14 3Z" fill="url(#g1)"/>
+        </svg>
+      </div>
+      <div>
+        <div class="model-name">Gemini</div>
+        <div class="model-maker">Google</div>
+      </div>
+    </div>
+
+    <!-- Mistral -->
+    <div class="model-chip">
+      <div class="model-icon" style="background:#ff7000">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <rect x="2" y="4" width="4" height="4" fill="white"/>
+          <rect x="9" y="4" width="4" height="4" fill="white"/>
+          <rect x="16" y="4" width="4" height="4" fill="white"/>
+          <rect x="2" y="10" width="4" height="4" fill="white"/>
+          <rect x="16" y="10" width="4" height="4" fill="white"/>
+          <rect x="2" y="16" width="4" height="4" fill="white"/>
+          <rect x="9" y="16" width="4" height="4" fill="white"/>
+          <rect x="16" y="16" width="4" height="4" fill="white"/>
+        </svg>
+      </div>
+      <div>
+        <div class="model-name">Mistral</div>
+        <div class="model-maker">Mistral AI</div>
+      </div>
+    </div>
+
+    <!-- Meta Llama -->
+    <div class="model-chip">
+      <div class="model-icon" style="background:linear-gradient(135deg,#0082fb,#0040c1)">
+        <svg width="22" height="22" viewBox="0 0 100 100" fill="none">
+          <path d="M20 70C20 70 15 55 25 40C35 25 50 22 60 28C72 35 78 52 74 65C70 78 58 82 50 80C42 78 36 72 36 65C36 58 42 52 50 52C58 52 62 58 62 65C62 72 56 75 50 75" stroke="white" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+      </div>
+      <div>
+        <div class="model-name">Llama</div>
+        <div class="model-maker">Meta</div>
+      </div>
+    </div>
+
+    <!-- Any model -->
+    <div class="model-chip">
+      <div class="model-icon" style="background:var(--bg3);border:1px solid var(--border)">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <circle cx="10" cy="10" r="8" stroke="#a78bfa" stroke-width="1.5"/>
+          <circle cx="10" cy="10" r="2.5" fill="#a78bfa"/>
+          <line x1="10" y1="2" x2="10" y2="6" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="10" y1="14" x2="10" y2="18" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="2" y1="10" x2="6" y2="10" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="14" y1="10" x2="18" y2="10" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="model-name">Any model</div>
+        <div class="model-maker">REST API</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- PRICING -->
+<div class="section-wrap" style="text-align:center">
+  <div class="section-label">Pricing</div>
+  <h2 class="section-title">Simple. Transparent.</h2>
+  <div class="pricing-card">
+    <div class="pricing-badge">MVP — Beta</div>
+    <div class="pricing-price">$0</div>
+    <div class="pricing-period">per month, free during beta</div>
+    <div class="pricing-features">
+      <div class="pf">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Unlimited memory writes &amp; reads
+      </div>
+      <div class="pf">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Works with any AI model or framework
+      </div>
+      <div class="pf">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        REST API + Python SDK
+      </div>
+      <div class="pf">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        No credit card required
+      </div>
+    </div>
+    <a href="#get-key" class="btn-primary" style="width:100%;justify-content:center">Get your free API key →</a>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- GET API KEY -->
+<section class="form-section" id="get-key">
+  <div class="section-label">Get started</div>
+  <h2 class="section-title">Get your free API key.</h2>
+  <p class="section-sub" style="margin:0 auto">Start building in 30 seconds. No credit card. No setup required.</p>
+  <div class="api-form">
+    <input type="email" id="emailInput" placeholder="your@email.com" autocomplete="email">
+    <button id="getKeyBtn" onclick="getApiKey()">Get API Key →</button>
+  </div>
+  <div class="key-box" id="keyBox">
+    <div class="key-label">✓ Your API key is ready</div>
+    <div class="key-row">
+      <div class="key-val" id="keyVal"></div>
+      <button class="copy-btn" onclick="copyKey()">Copy</button>
+    </div>
+  </div>
+  <div class="err-box" id="errBox"></div>
+  <p class="hint">Then install the SDK: <code style="font-family:var(--mono);color:var(--violet-light)">pip install truvem</code></p>
+</section>
+
+<!-- FOOTER -->
+<div style="max-width:1000px;margin:0 auto"><div class="divider"></div></div>
+<footer>
+  <div>
+    <div class="footer-logo">🧠 Truvem</div>
+    <div class="footer-copy">© 2026 Truvem · Built by Dieng Amine</div>
+    <div class="status-row" style="margin-top:6px">
+      <div class="status-green"></div>
+      <a href="https://stats.uptimerobot.com/7srrWVJZ52" target="_blank"
+         style="font-size:12px;color:#4ade80;text-decoration:none;font-weight:600">API Status: Operational</a>
+    </div>
+  </div>
+  <div class="footer-links">
+    <a href="https://truvem.onrender.com/docs" target="_blank">API Docs</a>
+    <a href="https://github.com/truvem/truvem" target="_blank">GitHub</a>
+    <a href="https://pypi.org/project/truvem/" target="_blank">PyPI</a>
+    <a href="mailto:gettruvem@gmail.com">Contact</a>
+    <a href="https://www.shipit.buzz/products/truvem?ref=badge" target="_blank" rel="noopener noreferrer">
+      <img src="https://www.shipit.buzz/api/products/truvem/badge?theme=dark"
+           alt="Featured on Shipit"
+           style="height:28px;vertical-align:middle;border-radius:6px;"
+           onerror="this.style.display='none'">
+    </a>
+  </div>
+</footer>
+
+<script>
+  let currentKey = '';
+
+  async function getApiKey() {
+    const email = document.getElementById('emailInput').value.trim();
+    const btn = document.getElementById('getKeyBtn');
+    const keyBox = document.getElementById('keyBox');
+    const errBox = document.getElementById('errBox');
+
+    errBox.classList.remove('show');
+    keyBox.classList.remove('show');
+
+    if (!email || !email.includes('@') || !email.includes('.')) {
+      errBox.textContent = 'Please enter a valid email address.';
+      errBox.classList.add('show');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Loading…';
+
+    try {
+      const resp = await fetch('https://truvem.onrender.com/v1/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await resp.json();
+
+      if (data.api_key) {
+        currentKey = data.api_key;
+        document.getElementById('keyVal').textContent = data.api_key;
+        keyBox.classList.add('show');
+      } else {
+        errBox.textContent = data.detail || 'Something went wrong. Please try again.';
+        errBox.classList.add('show');
+      }
+    } catch (e) {
+      errBox.textContent = 'Network error. The API may be warming up — please wait 30 seconds and try again.';
+      errBox.classList.add('show');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Get API Key →';
+    }
+  }
+
+  function copyKey() {
+    if (!currentKey) return;
+    navigator.clipboard.writeText(currentKey).then(() => {
+      const btn = document.querySelector('.copy-btn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 2000);
+    }).catch(() => {
+      const input = document.createElement('textarea');
+      input.value = currentKey;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      document.body.removeChild(input);
+      const btn = document.querySelector('.copy-btn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 2000);
+    });
+  }
+
+  document.getElementById('emailInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') getApiKey();
+  });
+</script>
+
 </body>
 </html>
