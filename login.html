@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Get API Key — Truvem</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #0a0a0a; --bg2: #111118; --violet: #7c3aed; --violet-light: #a78bfa;
+      --violet-dim: rgba(124,58,237,0.15); --white: #ffffff; --gray: #a1a1aa;
+      --gray-dim: #52525b; --border: rgba(255,255,255,0.08);
+      --font: 'Inter', system-ui, sans-serif; --mono: 'JetBrains Mono', monospace;
+    }
+    html { -webkit-font-smoothing: antialiased; }
+    body {
+      font-family: var(--font); background: var(--bg); color: var(--white);
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; padding: 24px;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 10px; font-weight: 700;
+      font-size: 18px; text-decoration: none; color: var(--white); margin-bottom: 40px;
+    }
+    .card {
+      width: 100%; max-width: 400px; background: var(--bg2);
+      border: 1px solid var(--border); border-radius: 24px;
+      padding: 40px 36px; position: relative; overflow: hidden;
+    }
+    .card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--violet), transparent);
+    }
+    .state { display: none; }
+    .state.active { display: block; }
+    .card-title { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px; }
+    .card-sub { font-size: 14px; color: var(--gray); margin-bottom: 32px; line-height: 1.6; }
+    .oauth-btn {
+      display: flex; align-items: center; gap: 12px; width: 100%;
+      padding: 14px 18px; border-radius: 12px; font-size: 15px; font-weight: 600;
+      cursor: pointer; font-family: var(--font); transition: transform 0.15s, box-shadow 0.15s;
+      border: none; margin-bottom: 12px;
+    }
+    .oauth-btn:hover { transform: translateY(-1px); }
+    .btn-github { background: #ffffff; color: #0a0a0a; }
+    .btn-github:hover { box-shadow: 0 6px 24px rgba(255,255,255,0.15); }
+    .btn-google { background: #ffffff; color: #1a1a1a; }
+    .btn-google:hover { box-shadow: 0 6px 24px rgba(255,255,255,0.12); }
+    .oauth-icon { width: 22px; height: 22px; flex-shrink: 0; }
+    .oauth-label { flex: 1; text-align: left; }
+    .divider-line {
+      display: flex; align-items: center; gap: 12px; margin: 20px 0;
+    }
+    .divider-line::before, .divider-line::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+    .divider-text { font-size: 12px; color: var(--gray-dim); }
+    .note { font-size: 12px; color: var(--gray-dim); text-align: center; margin-top: 20px; line-height: 1.6; }
+    .loading-wrap { text-align: center; padding: 20px 0; }
+    .spinner {
+      width: 36px; height: 36px; border: 3px solid var(--border);
+      border-top-color: var(--violet-light); border-radius: 50%;
+      animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 14px; color: var(--gray); }
+    .success-icon {
+      width: 48px; height: 48px; background: rgba(74,222,128,0.1);
+      border: 1px solid rgba(74,222,128,0.3); border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; margin-bottom: 20px;
+    }
+    .success-title { font-size: 20px; font-weight: 800; letter-spacing: -0.4px; margin-bottom: 6px; }
+    .success-sub { font-size: 14px; color: var(--gray); margin-bottom: 24px; line-height: 1.6; }
+    .key-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #4ade80; margin-bottom: 10px; }
+    .key-box {
+      background: rgba(0,0,0,0.4); border: 1px solid rgba(74,222,128,0.2);
+      border-radius: 10px; padding: 14px 16px; margin-bottom: 12px;
+    }
+    .key-val { font-family: var(--mono); font-size: 12px; color: var(--white); word-break: break-all; line-height: 1.6; }
+    .copy-btn {
+      width: 100%; background: var(--violet); color: white; border: none;
+      border-radius: 10px; padding: 13px; font-size: 14px; font-weight: 600;
+      cursor: pointer; font-family: var(--font); transition: opacity 0.2s; margin-bottom: 12px;
+    }
+    .copy-btn:hover { opacity: 0.85; }
+    .next-steps {
+      background: rgba(124,58,237,0.08); border: 1px solid rgba(124,58,237,0.2);
+      border-radius: 10px; padding: 14px 16px; margin-top: 16px;
+    }
+    .next-title { font-size: 12px; font-weight: 700; color: var(--violet-light); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
+    .next-step { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--gray); margin-bottom: 6px; line-height: 1.5; }
+    .next-step:last-child { margin-bottom: 0; }
+    .step-num-sm {
+      width: 18px; height: 18px; background: var(--violet-dim); border-radius: 4px;
+      font-size: 10px; font-weight: 700; color: var(--violet-light);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
+    }
+    code { font-family: var(--mono); font-size: 11px; background: rgba(124,58,237,0.15); padding: 1px 5px; border-radius: 4px; color: var(--violet-light); }
+    .error-icon {
+      width: 48px; height: 48px; background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3); border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; margin-bottom: 20px;
+    }
+    .error-title { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+    .error-msg { font-size: 14px; color: var(--gray); margin-bottom: 24px; line-height: 1.6; }
+    .retry-btn {
+      width: 100%; background: var(--bg2); color: var(--white);
+      border: 1px solid var(--border); border-radius: 10px; padding: 13px;
+      font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--font); transition: border-color 0.2s;
+    }
+    .retry-btn:hover { border-color: rgba(124,58,237,0.4); }
+    .page-footer { margin-top: 32px; text-align: center; font-size: 13px; color: var(--gray-dim); }
+    .page-footer a { color: var(--gray-dim); text-decoration: none; }
+    .page-footer a:hover { color: var(--white); }
+  </style>
+</head>
+<body>
+  <a href="https://truvem.github.io/truvem" class="logo">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect width="28" height="28" rx="7" fill="#7c3aed"/>
+      <circle cx="14" cy="14" r="3" fill="white"/>
+      <line x1="14" y1="4" x2="14" y2="10.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="14" y1="17.5" x2="14" y2="24" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="4" y1="14" x2="10.5" y2="14" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="17.5" y1="14" x2="24" y2="14" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    Truvem
+  </a>
+
+  <div class="card">
+    <!-- LOGIN -->
+    <div class="state active" id="stateLogin">
+      <div class="card-title">Get your free API key.</div>
+      <div class="card-sub">Sign in with a verified account. Takes 10 seconds. No credit card.</div>
+      <button class="oauth-btn btn-github" onclick="signIn('github')">
+        <svg class="oauth-icon" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
+        </svg>
+        <span class="oauth-label">Continue with GitHub</span>
+      </button>
+      <div class="divider-line"><span class="divider-text">or</span></div>
+      <button class="oauth-btn btn-google" onclick="signIn('google')">
+        <svg class="oauth-icon" viewBox="0 0 24 24">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        <span class="oauth-label">Continue with Google</span>
+      </button>
+      <p class="note">1 free API key per verified account. No abuse possible.</p>
+    </div>
+
+    <!-- LOADING -->
+    <div class="state" id="stateLoading">
+      <div class="loading-wrap">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loadingText">Verifying your account…</div>
+      </div>
+    </div>
+
+    <!-- SUCCESS -->
+    <div class="state" id="stateSuccess">
+      <div class="success-icon">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <path d="M4 11l5 5L18 6" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="success-title">Your API key is ready.</div>
+      <div class="success-sub">Save it — sign in again anytime to retrieve it.</div>
+      <div class="key-label">✦ API Key</div>
+      <div class="key-box"><div class="key-val" id="apiKeyDisplay"></div></div>
+      <button class="copy-btn" id="copyBtn" onclick="copyKey()">Copy API Key</button>
+      <div class="next-steps">
+        <div class="next-title">Next steps</div>
+        <div class="next-step"><div class="step-num-sm">1</div><span>Install: <code>pip install truvem</code></span></div>
+        <div class="next-step"><div class="step-num-sm">2</div><span><code>client = Truvem(api_key="your_key")</code></span></div>
+        <div class="next-step"><div class="step-num-sm">3</div><span><code>client.remember("agent", "content")</code></span></div>
+      </div>
+    </div>
+
+    <!-- ERROR -->
+    <div class="state" id="stateError">
+      <div class="error-icon">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <path d="M11 7v5M11 15h.01" stroke="#f87171" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="11" cy="11" r="9" stroke="#f87171" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <div class="error-title">Something went wrong.</div>
+      <div class="error-msg" id="errorMsg">Unable to complete sign-in. Please try again.</div>
+      <button class="retry-btn" onclick="retry()">Try again</button>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <a href="https://truvem.github.io/truvem">← Back to Truvem</a>
+    &nbsp;·&nbsp;
+    <a href="https://truvem.onrender.com/docs">API Docs</a>
+  </div>
+
+<script>
+  const SUPABASE_URL = 'https://mbosppruuqrcfwiyknjs.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ib3NwcHJ1dXFyY2Z3aXlrbmpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4NjIwNjIsImV4cCI6MjA5NzQzODA2Mn0.MM2ajkW4nOCDpNzAo-VSJx8GoDRBWrkNKUg9tCF3Gwo';
+  const TRUVEM_API = 'https://truvem.onrender.com';
+  const REDIRECT_URL = 'https://truvem.github.io/truvem/login.html';
+
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  let currentKey = '';
+
+  function showState(id) {
+    document.querySelectorAll('.state').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  async function signIn(provider) {
+    showState('stateLoading');
+    document.getElementById('loadingText').textContent = 'Redirecting to ' + (provider === 'github' ? 'GitHub' : 'Google') + '…';
+    const { error } = await sb.auth.signInWithOAuth({ provider, options: { redirectTo: REDIRECT_URL } });
+    if (error) { document.getElementById('errorMsg').textContent = error.message; showState('stateError'); }
+  }
+
+  async function handleCallback() {
+    showState('stateLoading');
+    const { data: { session }, error } = await sb.auth.getSession();
+    if (error || !session) { document.getElementById('errorMsg').textContent = 'Session not found. Please sign in again.'; showState('stateError'); return; }
+    const email = session.user.email;
+    if (!email) { document.getElementById('errorMsg').textContent = 'No email on your account. Use a different sign-in method.'; showState('stateError'); return; }
+    document.getElementById('loadingText').textContent = 'Generating your API key…';
+    try {
+      const resp = await fetch(TRUVEM_API + '/v1/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
+      const data = await resp.json();
+      if (data.api_key) { currentKey = data.api_key; document.getElementById('apiKeyDisplay').textContent = data.api_key; showState('stateSuccess'); }
+      else { document.getElementById('errorMsg').textContent = data.detail || 'Failed to generate API key.'; showState('stateError'); }
+    } catch(e) { document.getElementById('errorMsg').textContent = 'Network error — API may be warming up. Wait 30s and retry.'; showState('stateError'); }
+  }
+
+  function copyKey() {
+    if (!currentKey) return;
+    const btn = document.getElementById('copyBtn');
+    navigator.clipboard.writeText(currentKey).catch(() => { const t = document.createElement('textarea'); t.value = currentKey; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t); });
+    btn.textContent = '✓ Copied!'; setTimeout(() => btn.textContent = 'Copy API Key', 2000);
+  }
+
+  function retry() { showState('stateLogin'); }
+
+  window.addEventListener('load', async () => {
+    const params = new URLSearchParams(window.location.search);
+    const hash = window.location.hash;
+    if (params.has('error') || hash.includes('error')) { document.getElementById('errorMsg').textContent = params.get('error_description') || 'Authentication cancelled.'; showState('stateError'); }
+    else if (params.has('code') || hash.includes('access_token')) { await handleCallback(); }
+    else { showState('stateLogin'); }
+  });
+</script>
+</body>
+</html>
