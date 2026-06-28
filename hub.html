@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Truvem Hub — Toutes les IA, une seule mémoire</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#09090B;--surface:#111118;--border:#222230;
+  --accent:#6366F1;--accent-dim:rgba(99,102,241,0.15);
+  --text:#F4F4F8;--muted:#71717A;--success:#22C55E;
+  --free:#22C55E;--paid:#F59E0B;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh;overflow:hidden;}
+
+/* ── SETUP ─────────────────────────────────────── */
+#setup{display:flex;align-items:center;justify-content:center;height:100vh;padding:20px;overflow-y:auto;}
+.setup-card{width:100%;max-width:420px;padding-bottom:32px;}
+.logo{text-align:center;margin-bottom:28px;}
+.logo-icon{font-size:44px;display:block;margin-bottom:8px;}
+.logo h1{font-size:24px;font-weight:700;letter-spacing:-0.5px;}
+.logo p{color:var(--muted);font-size:13px;margin-top:5px;}
+.field{margin-bottom:13px;}
+.field label{display:block;font-size:12px;font-weight:500;color:#A1A1AA;margin-bottom:5px;}
+.field input,.field select{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 13px;color:var(--text);font-size:14px;outline:none;font-family:var(--font);transition:border-color .2s;}
+.field input:focus,.field select:focus{border-color:var(--accent);}
+.field .hint{font-size:11px;color:#3F3F50;margin-top:3px;display:block;}
+.model-picker-btn{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 13px;color:var(--text);font-size:14px;text-align:left;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:space-between;transition:border-color .2s;}
+.model-picker-btn:hover{border-color:var(--accent);}
+.model-picker-btn .model-badge{font-size:11px;padding:2px 7px;border-radius:20px;font-weight:500;}
+.badge-free{background:rgba(34,197,94,0.15);color:var(--free);}
+.badge-paid{background:rgba(245,158,11,0.15);color:var(--paid);}
+.btn-primary{width:100%;background:var(--accent);border:none;border-radius:10px;padding:13px;color:white;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font);margin-top:8px;transition:opacity .2s;}
+.btn-primary:disabled{opacity:.5;cursor:default;}
+.error-box{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#FCA5A5;padding:10px 13px;border-radius:10px;margin-bottom:14px;font-size:13px;display:none;}
+.powered{margin-top:18px;text-align:center;font-size:11px;color:#3B3B50;}
+.powered span{color:var(--accent);}
+.or-link{color:var(--accent);text-decoration:none;}
+
+/* ── CHAT ──────────────────────────────────────── */
+#chat{display:none;height:100vh;flex-direction:column;}
+.chat-header{padding:11px 16px;border-bottom:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.h-left{display:flex;align-items:center;gap:10px;}
+.h-logo{font-size:20px;}
+.h-title{font-size:14px;font-weight:600;letter-spacing:-.2px;}
+.h-model{font-size:11px;color:var(--muted);}
+.h-right{display:flex;align-items:center;gap:6px;}
+.mem-dot{width:7px;height:7px;border-radius:50%;background:var(--success);transition:box-shadow .3s;}
+.mem-dot.pulse{box-shadow:0 0 10px var(--success);}
+.mem-count{font-size:12px;color:var(--success);font-weight:500;}
+.mem-id{font-size:10px;color:#4B5060;}
+.messages{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:9px;}
+.empty-state{text-align:center;color:var(--muted);margin-top:40px;}
+.empty-icon{font-size:32px;margin-bottom:8px;}
+.empty-state p{font-size:14px;font-weight:500;}
+.empty-state small{font-size:12px;color:#4B5060;display:block;margin-top:5px;line-height:1.6;}
+.msg-row{display:flex;}
+.msg-row.user{justify-content:flex-end;}
+.bubble{max-width:84%;padding:9px 13px;font-size:14px;line-height:1.55;white-space:pre-wrap;word-break:break-word;}
+.bubble.user{background:var(--accent);border-radius:16px 16px 4px 16px;color:white;}
+.bubble.assistant{background:var(--surface);border:1px solid var(--border);border-radius:16px 16px 16px 4px;}
+.bubble.error{color:#FCA5A5;}
+.bmodel{font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:500;}
+.thinking{padding:9px 13px;background:var(--surface);border:1px solid var(--border);border-radius:16px 16px 16px 4px;font-size:13px;color:var(--muted);display:none;align-self:flex-start;}
+.chat-bottom{border-top:1px solid var(--border);background:var(--surface);padding:9px 12px;flex-shrink:0;}
+.current-model-btn{width:100%;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.25);border-radius:8px;padding:7px 12px;color:#A5B4FC;font-size:12px;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;transition:background .2s;}
+.current-model-btn:hover{background:rgba(99,102,241,.15);}
+.input-row{display:flex;gap:7px;align-items:center;}
+.msg-input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 13px;color:var(--text);font-size:14px;outline:none;font-family:var(--font);}
+.msg-input:focus{border-color:var(--accent);}
+.send-btn{width:40px;height:40px;flex-shrink:0;background:var(--accent);border:none;border-radius:10px;color:white;font-size:18px;cursor:pointer;transition:opacity .2s;}
+.send-btn:disabled{background:var(--border);cursor:default;}
+.footer-note{margin:5px 0 0;font-size:10px;color:#3B3B50;text-align:center;}
+
+/* ── MODEL MODAL ───────────────────────────────── */
+#modelModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:flex-end;justify-content:center;}
+#modelModal.open{display:flex;}
+.modal-sheet{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:500px;height:85vh;display:flex;flex-direction:column;border-top:1px solid var(--border);}
+.modal-top{padding:14px 16px 10px;flex-shrink:0;}
+.modal-drag{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 14px;}
+.modal-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.modal-title{font-size:16px;font-weight:600;}
+.modal-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:2px 6px;}
+.modal-search{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 13px;color:var(--text);font-size:14px;outline:none;font-family:var(--font);}
+.modal-search:focus{border-color:var(--accent);}
+.modal-body{flex:1;overflow-y:auto;padding:8px 0;}
+.provider-section{margin-bottom:2px;}
+.provider-header{padding:8px 16px 5px;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;position:sticky;top:0;background:var(--surface);}
+.model-item{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;cursor:pointer;transition:background .15s;}
+.model-item:hover,.model-item.selected{background:var(--accent-dim);}
+.model-item .mi-left{display:flex;flex-direction:column;gap:2px;}
+.model-item .mi-name{font-size:14px;font-weight:500;}
+.model-item .mi-id{font-size:10px;color:var(--muted);font-family:monospace;}
+.model-item .mi-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.model-item .mi-desc{font-size:11px;color:var(--muted);max-width:90px;text-align:right;}
+.badge{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600;white-space:nowrap;}
+.b-free{background:rgba(34,197,94,.15);color:var(--free);}
+.b-paid{background:rgba(245,158,11,.15);color:var(--paid);}
+.custom-section{padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0;}
+.custom-label{font-size:12px;color:var(--muted);margin-bottom:7px;}
+.custom-row{display:flex;gap:7px;}
+.custom-input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:9px 12px;color:var(--text);font-size:13px;outline:none;font-family:monospace;}
+.custom-input:focus{border-color:var(--accent);}
+.custom-btn{background:var(--accent);border:none;border-radius:10px;padding:9px 14px;color:white;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;}
+.no-results{padding:24px;text-align:center;color:var(--muted);font-size:13px;}
+</style>
+</head>
+<body>
+
+<!-- ── SETUP ──────────────────────────────────── -->
+<div id="setup">
+ <div class="setup-card">
+  <div class="logo">
+   <span class="logo-icon">🧠</span>
+   <h1>Truvem Hub</h1>
+   <p>Toutes les IA du monde. Une seule mémoire.</p>
+  </div>
+  <div id="errorBox" class="error-box"></div>
+  <div class="field">
+   <label>Clé Truvem</label>
+   <input type="text" id="truvemKey" placeholder="truvem_XXXXX"/>
+   <span class="hint">Obtenir sur <a class="or-link" href="https://truvem.github.io/truvem" target="_blank">truvem.github.io/truvem</a></span>
+  </div>
+  <div class="field">
+   <label>Clé OpenRouter <span style="color:var(--muted);font-weight:400">(accès à 300+ modèles)</span></label>
+   <input type="password" id="orKey" placeholder="sk-or-..."/>
+   <span class="hint">Gratuit sur <a class="or-link" href="https://openrouter.ai" target="_blank">openrouter.ai</a> · Modèles gratuits disponibles sans crédit</span>
+  </div>
+  <div class="field">
+   <label>Ton identifiant mémoire</label>
+   <input type="text" id="agentId" placeholder="mon-nom"/>
+   <span class="hint">Même ID = même mémoire sur toutes les IA</span>
+  </div>
+  <div class="field">
+   <label>Modèle IA</label>
+   <button class="model-picker-btn" id="setupModelBtn" onclick="openModal('setup')">
+    <span id="setupModelName">🌙 Kimi K2.6</span>
+    <span class="model-badge badge-free" id="setupModelBadge">GRATUIT</span>
+   </button>
+   <span class="hint">Choisir parmi 300+ modèles · Gratuits &amp; payants</span>
+  </div>
+  <button class="btn-primary" id="startBtn" onclick="startHub()">Lancer le Hub →</button>
+  <p class="powered">Propulsé par <span>Truvem</span> · Le standard mémoire des agents IA</p>
+ </div>
+</div>
+
+<!-- ── CHAT ───────────────────────────────────── -->
+<div id="chat">
+ <div class="chat-header">
+  <div class="h-left">
+   <span class="h-logo">🧠</span>
+   <div>
+    <div class="h-title">Truvem Hub</div>
+    <div class="h-model" id="hModel">🌙 Kimi K2.6</div>
+   </div>
+  </div>
+  <div class="h-right">
+   <div class="mem-dot" id="memDot"></div>
+   <div>
+    <div class="mem-count" id="memCount">0 mémoires</div>
+    <div class="mem-id" id="memId"></div>
+   </div>
+  </div>
+ </div>
+ <div class="messages" id="messages">
+  <div class="empty-state" id="emptyState">
+   <div class="empty-icon">💬</div>
+   <p>Commence à écrire</p>
+   <small>Ta mémoire est active · Change d'IA en plein chat<br>le contexte reste intact</small>
+  </div>
+  <div class="thinking" id="thinking"></div>
+ </div>
+ <div class="chat-bottom">
+  <button class="current-model-btn" id="chatModelBtn" onclick="openModal('chat')">
+   <span id="chatModelName">🌙 Kimi K2.6</span>
+   <span style="font-size:11px;opacity:.6">Changer →</span>
+  </button>
+  <div class="input-row">
+   <input type="text" class="msg-input" id="msgInput" placeholder="Écris ton message..." onkeydown="if(event.key==='Enter')sendMsg()"/>
+   <button class="send-btn" id="sendBtn" onclick="sendMsg()">→</button>
+  </div>
+  <p class="footer-note">Mémoire sauvegardée automatiquement · Powered by Truvem</p>
+ </div>
+</div>
+
+<!-- ── MODEL MODAL ─────────────────────────────── -->
+<div id="modelModal">
+ <div class="modal-sheet">
+  <div class="modal-top">
+   <div class="modal-drag"></div>
+   <div class="modal-title-row">
+    <span class="modal-title">Choisir un modèle</span>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+   </div>
+   <input type="search" class="modal-search" id="modelSearch" placeholder="Rechercher un modèle..." oninput="filterModels()"/>
+  </div>
+  <div class="modal-body" id="modelList"></div>
+  <div class="custom-section">
+   <div class="custom-label">📋 Coller n'importe quel ID OpenRouter (<a class="or-link" href="https://openrouter.ai/models" target="_blank">voir tous les modèles</a>)</div>
+   <div class="custom-row">
+    <input type="text" class="custom-input" id="customId" placeholder="ex: openai/gpt-4o ou google/gemini-2.5-pro"/>
+    <button class="custom-btn" onclick="useCustomModel()">Utiliser</button>
+   </div>
+  </div>
+ </div>
+</div>
+
+<script>
+// ── DATA ────────────────────────────────────────
+const PROVIDERS = [
+ { name:'🆓 Gratuit', color:'#22C55E', models:[
+  {id:'moonshotai/kimi-k2.6:free',      name:'Kimi K2.6',           desc:'Meilleur coding',       free:true},
+  {id:'deepseek/deepseek-r1:free',       name:'DeepSeek R1',          desc:'Raisonnement top',      free:true},
+  {id:'deepseek/deepseek-v4-flash:free', name:'DeepSeek V4 Flash',    desc:'Ultra rapide',          free:true},
+  {id:'qwen/qwen3-235b-a22b:free',       name:'Qwen3 235B',           desc:'Très grand',            free:true},
+  {id:'qwen/qwen3-32b:free',             name:'Qwen3 32B',            desc:'Équilibré',             free:true},
+  {id:'meta-llama/llama-4-scout:free',   name:'Llama 4 Scout',        desc:'Nouvelle génération',   free:true},
+  {id:'meta-llama/llama-3.3-70b-instruct:free',name:'Llama 3.3 70B', desc:'Polyvalent',            free:true},
+  {id:'google/gemma-3-27b-it:free',      name:'Gemma 3 27B',          desc:'Google open-source',    free:true},
+  {id:'mistralai/mistral-small-3.2-24b-instruct:free',name:'Mistral Small 3.2',desc:'24B léger',   free:true},
+  {id:'mistralai/mistral-7b-instruct:free',name:'Mistral 7B',         desc:'Rapide et compact',     free:true},
+  {id:'microsoft/phi-4:free',            name:'Phi-4',                desc:'Microsoft efficace',    free:true},
+  {id:'nvidia/llama-3.1-nemotron-ultra-253b-v1:free',name:'Nemotron 253B',desc:'NVIDIA puissant',  free:true},
+ ]},
+ { name:'🤖 OpenAI', color:'#10A37F', models:[
+  {id:'openai/gpt-4o',           name:'GPT-4o',         desc:'Flagship multimodal'},
+  {id:'openai/gpt-4o-mini',      name:'GPT-4o Mini',    desc:'Rapide et économique'},
+  {id:'openai/o3',               name:'o3',             desc:'Raisonnement avancé'},
+  {id:'openai/o3-mini',          name:'o3-mini',        desc:'Raisonnement compact'},
+  {id:'openai/o4-mini',          name:'o4-mini',        desc:'Dernier mini'},
+  {id:'openai/gpt-4-turbo',      name:'GPT-4 Turbo',    desc:'128K contexte'},
+  {id:'openai/gpt-3.5-turbo',    name:'GPT-3.5 Turbo',  desc:'Classique rapide'},
+ ]},
+ { name:'🧠 Anthropic', color:'#CC785C', models:[
+  {id:'anthropic/claude-opus-4-8',   name:'Claude Opus 4.8',   desc:'Le plus intelligent'},
+  {id:'anthropic/claude-opus-4',     name:'Claude Opus 4',     desc:'Flagship Anthropic'},
+  {id:'anthropic/claude-sonnet-4-5', name:'Claude Sonnet 4.5', desc:'Équilibre parfait'},
+  {id:'anthropic/claude-haiku-4-5',  name:'Claude Haiku 4.5',  desc:'Ultra rapide'},
+ ]},
+ { name:'✨ Google', color:'#4285F4', models:[
+  {id:'google/gemini-2.5-pro',              name:'Gemini 2.5 Pro',       desc:'1M tokens + recherche'},
+  {id:'google/gemini-2.5-flash',            name:'Gemini 2.5 Flash',     desc:'Rapide 1M tokens'},
+  {id:'google/gemini-2.5-flash-lite-preview',name:'Gemini 2.5 Flash Lite',desc:'Version légère'},
+  {id:'google/gemini-2.0-flash-001',        name:'Gemini 2.0 Flash',     desc:'Génération précédente'},
+ ]},
+ { name:'⚡ xAI / Grok', color:'#E5E5E5', models:[
+  {id:'x-ai/grok-4',      name:'Grok 4',      desc:'Flagship xAI'},
+  {id:'x-ai/grok-3',      name:'Grok 3',      desc:'Puissant et rapide'},
+  {id:'x-ai/grok-3-mini', name:'Grok 3 Mini', desc:'Version compacte'},
+  {id:'x-ai/grok-2-1212', name:'Grok 2',      desc:'Stable et fiable'},
+ ]},
+ { name:'👾 Meta / Llama', color:'#0064E0', models:[
+  {id:'meta-llama/llama-4-maverick',         name:'Llama 4 Maverick', desc:'Flagship Meta'},
+  {id:'meta-llama/llama-4-scout',            name:'Llama 4 Scout',    desc:'Version efficiente'},
+  {id:'meta-llama/llama-3.3-70b-instruct',   name:'Llama 3.3 70B',   desc:'Solide et fiable'},
+  {id:'meta-llama/llama-3.1-405b-instruct',  name:'Llama 3.1 405B',  desc:'Le plus grand Llama'},
+ ]},
+ { name:'🔵 DeepSeek', color:'#4A9EFF', models:[
+  {id:'deepseek/deepseek-r1',        name:'DeepSeek R1',       desc:'Raisonnement premium'},
+  {id:'deepseek/deepseek-v4-flash',  name:'DeepSeek V4 Flash', desc:'Flash rapide'},
+  {id:'deepseek/deepseek-v4-pro',    name:'DeepSeek V4 Pro',   desc:'Version pro'},
+  {id:'deepseek/deepseek-chat',      name:'DeepSeek Chat',     desc:'Chat général'},
+ ]},
+ { name:'🌙 Moonshot / Kimi', color:'#A855F7', models:[
+  {id:'moonshotai/kimi-k2.6', name:'Kimi K2.6',   desc:'Version payante complète'},
+  {id:'moonshotai/kimi-k2',   name:'Kimi K2',     desc:'Version précédente'},
+  {id:'moonshotai/moonshot-v1-128k',name:'Moonshot 128K',desc:'Contexte étendu'},
+ ]},
+ { name:'🌊 Mistral', color:'#FF6B6B', models:[
+  {id:'mistralai/mistral-large-2411',         name:'Mistral Large 2411',  desc:'Flagship Mistral'},
+  {id:'mistralai/mistral-medium-3',           name:'Mistral Medium 3',    desc:'Équilibré'},
+  {id:'mistralai/mixtral-8x22b-instruct',     name:'Mixtral 8x22B',       desc:'MoE puissant'},
+  {id:'mistralai/codestral-2501',             name:'Codestral 2501',      desc:'Spécialisé code'},
+ ]},
+ { name:'🔍 Perplexity (Web)', color:'#20B2AA', models:[
+  {id:'perplexity/sonar-pro',            name:'Sonar Pro',            desc:'Web temps réel'},
+  {id:'perplexity/sonar',                name:'Sonar',                desc:'Search intégré'},
+  {id:'perplexity/sonar-reasoning-pro',  name:'Sonar Reasoning Pro',  desc:'Web + raisonnement'},
+  {id:'perplexity/sonar-reasoning',      name:'Sonar Reasoning',      desc:'Raisonnement web'},
+ ]},
+ { name:'💡 Cohere', color:'#39594D', models:[
+  {id:'cohere/command-a',       name:'Command A',    desc:'Enterprise grade'},
+  {id:'cohere/command-r-plus',  name:'Command R+',   desc:'RAG optimisé'},
+  {id:'cohere/command-r7b-12-2024',name:'Command R7B',desc:'Version légère'},
+ ]},
+ { name:'📦 Amazon', color:'#FF9900', models:[
+  {id:'amazon/nova-pro-v1',   name:'Nova Pro',   desc:'AWS flagship'},
+  {id:'amazon/nova-lite-v1',  name:'Nova Lite',  desc:'Version légère'},
+  {id:'amazon/nova-micro-v1', name:'Nova Micro', desc:'Ultra compact'},
+ ]},
+ { name:'🔬 Autres', color:'#9CA3AF', models:[
+  {id:'nvidia/llama-3.1-nemotron-ultra-253b-v1',name:'Nemotron Ultra 253B',desc:'NVIDIA flagship'},
+  {id:'microsoft/phi-4',       name:'Phi-4',            desc:'Microsoft SLM'},
+  {id:'microsoft/wizardlm-2-8x22b',name:'WizardLM 8x22B',desc:'Microsoft MoE'},
+  {id:'01-ai/yi-large',        name:'Yi Large',         desc:'01.AI puissant'},
+  {id:'inflection/inflect-3-pi',name:'Pi (Inflect-3)',  desc:'Conversationnel'},
+ ]},
+];
+
+// Flatten all models for search
+const ALL_MODELS = PROVIDERS.flatMap(p => p.models.map(m => ({...m, provider:p.name})));
+
+// State
+let S = {
+  truvemKey:'', orKey:'', agentId:'',
+  model:'moonshotai/kimi-k2.6:free',
+  modelName:'Kimi K2.6', modelFree:true,
+  memories:[], messages:[], loading:false,
+  modalContext:'setup'
+};
+
+// Load saved
+window.onload = () => {
+  try {
+    const sv = JSON.parse(localStorage.getItem('truvem_hub')||'{}');
+    if(sv.truvemKey) document.getElementById('truvemKey').value = sv.truvemKey;
+    if(sv.orKey) document.getElementById('orKey').value = sv.orKey;
+    if(sv.agentId) document.getElementById('agentId').value = sv.agentId;
+    if(sv.model){ setModel(sv.model, sv.modelName||sv.model, sv.modelFree||false); }
+  } catch(e){}
+  renderModelList('');
+};
+
+function setModel(id, name, free){
+  S.model=id; S.modelName=name; S.modelFree=free;
+  const badge = free ? '<span class="model-badge badge-free">GRATUIT</span>' : '<span class="model-badge badge-paid">PAYANT</span>';
+  const display = (free?'🆓 ':'💰 ')+(name||id.split('/').pop());
+  document.getElementById('setupModelName').textContent = display;
+  document.getElementById('setupModelBadge').textContent = free?'GRATUIT':'PAYANT';
+  document.getElementById('setupModelBadge').className = 'model-badge '+(free?'badge-free':'badge-paid');
+  document.getElementById('chatModelName').textContent = display;
+  document.getElementById('hModel').textContent = display;
+}
+
+// ── MODAL ──────────────────────────────────────
+function openModal(ctx){
+  S.modalContext=ctx;
+  document.getElementById('modelSearch').value='';
+  document.getElementById('customId').value='';
+  renderModelList('');
+  document.getElementById('modelModal').classList.add('open');
+  setTimeout(()=>document.getElementById('modelSearch').focus(),200);
+}
+function closeModal(){ document.getElementById('modelModal').classList.remove('open'); }
+document.getElementById('modelModal').onclick = function(e){ if(e.target===this)closeModal(); };
+
+function renderModelList(query){
+  const q = query.toLowerCase().trim();
+  const list = document.getElementById('modelList');
+  list.innerHTML='';
+  let totalShown=0;
+  PROVIDERS.forEach(p=>{
+    const filtered = p.models.filter(m=>
+      !q || m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q) || (m.desc||'').toLowerCase().includes(q)
+    );
+    if(!filtered.length) return;
+    totalShown+=filtered.length;
+    const sec = document.createElement('div'); sec.className='provider-section';
+    const hdr = document.createElement('div'); hdr.className='provider-header'; hdr.textContent=p.name;
+    sec.appendChild(hdr);
+    filtered.forEach(m=>{
+      const item = document.createElement('div');
+      item.className='model-item'+(S.model===m.id?' selected':'');
+      item.innerHTML=`
+        <div class="mi-left">
+          <span class="mi-name">${m.name}</span>
+          <span class="mi-id">${m.id}</span>
+        </div>
+        <div class="mi-right">
+          ${m.desc?`<span class="mi-desc">${m.desc}</span>`:''}
+          <span class="badge ${m.free?'b-free':'b-paid'}">${m.free?'GRATUIT':'PAYANT'}</span>
+        </div>`;
+      item.onclick=()=>{ setModel(m.id,m.name,!!m.free); closeModal(); };
+      sec.appendChild(item);
+    });
+    list.appendChild(sec);
+  });
+  if(!totalShown){
+    list.innerHTML=`<div class="no-results">Aucun modèle trouvé pour "${query}"<br><span style="font-size:11px;opacity:.6">Colle l'ID complet dans le champ ci-dessous</span></div>`;
+  }
+}
+
+function filterModels(){ renderModelList(document.getElementById('modelSearch').value); }
+
+function useCustomModel(){
+  const id = document.getElementById('customId').value.trim();
+  if(!id){ alert('Colle un ID de modèle valide'); return; }
+  const name = id.split('/').pop().replace(/:free$/,'');
+  const free = id.endsWith(':free');
+  setModel(id, name, free);
+  closeModal();
+}
+
+// ── TRUVEM ─────────────────────────────────────
+async function readMems(){
+  const r = await fetch('https://truvem.onrender.com/v1/memory/read',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':S.truvemKey},
+    body:JSON.stringify({agent_id:S.agentId})
+  });
+  const d=await r.json();
+  return Array.isArray(d.memories)?d.memories:[];
+}
+async function writeMem(content){
+  await fetch('https://truvem.onrender.com/v1/memory/write',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':S.truvemKey},
+    body:JSON.stringify({agent_id:S.agentId,content})
+  }).catch(()=>{});
+}
+
+// ── START ──────────────────────────────────────
+async function startHub(){
+  document.getElementById('errorBox').style.display='none';
+  const tk=document.getElementById('truvemKey').value.trim();
+  const ok=document.getElementById('orKey').value.trim();
+  const aid=document.getElementById('agentId').value.trim();
+  if(!tk||!ok||!aid){showErr('Tous les champs sont requis');return;}
+  S.truvemKey=tk; S.orKey=ok; S.agentId=aid;
+  const btn=document.getElementById('startBtn');
+  btn.textContent='Connexion...'; btn.disabled=true;
+  try{
+    S.memories=await readMems();
+    localStorage.setItem('truvem_hub',JSON.stringify({truvemKey:tk,orKey:ok,agentId:aid,model:S.model,modelName:S.modelName,modelFree:S.modelFree}));
+    document.getElementById('setup').style.display='none';
+    document.getElementById('chat').style.display='flex';
+    document.getElementById('memId').textContent=aid;
+    updateMemCount();
+    document.getElementById('msgInput').focus();
+  } catch(e){
+    showErr('Erreur connexion Truvem. Vérifie ta clé API.');
+    btn.textContent='Lancer le Hub →'; btn.disabled=false;
+  }
+}
+
+function showErr(msg){const b=document.getElementById('errorBox');b.textContent=msg;b.style.display='block';}
+function updateMemCount(){document.getElementById('memCount').textContent=S.memories.length+' mémoire'+(S.memories.length>1?'s':'');}
+function pulse(){const d=document.getElementById('memDot');d.classList.add('pulse');setTimeout(()=>d.classList.remove('pulse'),1500);}
+
+// ── CHAT ───────────────────────────────────────
+function addMsg(role,content,modelName,isError){
+  document.getElementById('emptyState').style.display='none';
+  const msgs=document.getElementById('messages');
+  const thinking=document.getElementById('thinking');
+  const row=document.createElement('div'); row.className='msg-row '+role;
+  const bubble=document.createElement('div'); bubble.className='bubble '+role+(isError?' error':'');
+  if(role==='assistant'&&modelName){
+    const ml=document.createElement('div'); ml.className='bmodel';
+    ml.textContent=(S.modelFree?'🆓 ':'💰 ')+modelName;
+    bubble.appendChild(ml);
+  }
+  bubble.appendChild(document.createTextNode(content));
+  row.appendChild(bubble);
+  msgs.insertBefore(row,thinking);
+  msgs.scrollTop=msgs.scrollHeight;
+  S.messages.push({role,content});
+}
+
+function setThinking(show){
+  const el=document.getElementById('thinking');
+  if(show){el.textContent=(S.modelFree?'🆓 ':'💰 ')+(S.modelName||S.model)+' réfléchit...';el.style.display='block';document.getElementById('messages').scrollTop=9999;}
+  else{el.style.display='none';}
+}
+
+async function sendMsg(){
+  const input=document.getElementById('msgInput');
+  const userMsg=input.value.trim();
+  if(!userMsg||S.loading) return;
+  input.value=''; S.loading=true;
+  document.getElementById('sendBtn').disabled=true;
+  addMsg('user',userMsg);
+  setThinking(true);
+  try{
+    const memText=S.memories.length>0
+      ?`Mémoires de l'utilisateur:\n${S.memories.slice(-12).map((m,i)=>`${i+1}. ${m.content||m}`).join('\n')}`
+      :'Aucune mémoire précédente.';
+    const sys=`Tu es un assistant IA connecté à Truvem — protocole de mémoire persistante pour agents IA.\n\n${memText}\n\nUtilise ces mémoires pour personnaliser tes réponses. Sois concis et direct.`;
+    const res=await fetch('https://openrouter.ai/api/v1/chat/completions',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':`Bearer ${S.orKey}`,
+        'HTTP-Referer':'https://truvem.github.io/truvem',
+        'X-Title':'Truvem Hub',
+      },
+      body:JSON.stringify({
+        model:S.model,
+        messages:[{role:'system',content:sys},...S.messages.slice(-10)],
+        max_tokens:1000
+      })
+    });
+    const data=await res.json();
+    if(data.error) throw new Error(data.error.message||'Erreur modèle');
+    const aiText=data.choices?.[0]?.message?.content||'Pas de réponse.';
+    setThinking(false);
+    addMsg('assistant',aiText,S.modelName);
+    const summary=`[${S.modelName}] User:"${userMsg.slice(0,100)}" IA:"${aiText.slice(0,200)}"`;
+    await writeMem(summary);
+    S.memories=await readMems();
+    updateMemCount(); pulse();
+  } catch(e){
+    setThinking(false);
+    const msg=e.message?.includes('429')?'Limite atteinte. Essaie un autre modèle →'
+              :e.message?.includes('model')||e.message?.includes('404')?'Modèle introuvable. Vérifie l\'ID ou essaie un autre →'
+              :`Erreur: ${e.message}`;
+    addMsg('assistant','❌ '+msg,null,true);
+  }
+  S.loading=false;
+  document.getElementById('sendBtn').disabled=false;
+  document.getElementById('msgInput').focus();
+}
+</script>
+</body>
+</html>
