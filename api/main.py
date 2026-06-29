@@ -138,7 +138,7 @@ def log_action(request: Request, payload: ActionRequest, x_api_key: Optional[str
         "agent_id": payload.agent_id,
         "model": payload.model,
         "authorized_by": payload.authorized_by,
-        "scope": payload.scope,
+        "scope": ",".join(payload.scope),
         "prompt_hash": sha256(payload.prompt),
         "result_hash": sha256(payload.result),
         "proof_hash": sha256(payload.prompt + payload.result),
