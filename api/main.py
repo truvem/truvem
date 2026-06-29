@@ -8,6 +8,7 @@ from slowapi.errors import RateLimitExceeded
 from pydantic import BaseModel
 from supabase import create_client
 from typing import Optional
+from actions import router as actions_router
 
 limiter = Limiter(key_func=get_remote_address)
 app = FastAPI()
@@ -20,6 +21,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(actions_router)
 
 supabase = create_client(
     os.environ.get("SUPABASE_URL"),
@@ -54,7 +57,7 @@ def check_key(x_api_key: Optional[str] = Header(None)):
 @app.get("/")
 @limiter.limit("60/minute")
 def root(request: Request):
-    return {"name": "Truvem", "version": "0.3.0", "status": "ok"}
+    return {"name": "Truvem", "version": "0.4.0", "status": "ok"}
 
 @app.api_route("/health", methods=["GET", "HEAD"])
 @limiter.limit("60/minute")
@@ -65,17 +68,12 @@ def health(request: Request):
 @limiter.limit("10/minute")
 def register(request: Request, req: RegisterRequest):
     ip = request.client.host
-
-    # Check if email already exists
     existing_email = supabase.table("users").select("*").eq("email", req.email).execute()
     if existing_email.data:
         return {"status": "ok", "api_key": existing_email.data[0]["api_key"]}
-
-    # Check if IP already has a key
     existing_ip = supabase.table("users").select("*").eq("ip_address", ip).execute()
     if existing_ip.data:
         raise HTTPException(status_code=429, detail="One API key per IP address allowed")
-
     api_key = "truvem_" + secrets.token_urlsafe(32)
     supabase.table("users").insert({
         "email": req.email,
