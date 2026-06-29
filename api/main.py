@@ -1,14 +1,14 @@
 import os
 import secrets
-from fastapi import FastAPI, HTTPException, Header, Request
+import hashlib
+from fastapi import FastAPI, HTTPException, Header, Request, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from pydantic import BaseModel
 from supabase import create_client
-from typing import Optional
-from actions import router as actions_router
+from typing import Optional, List
 
 limiter = Limiter(key_func=get_remote_address)
 app = FastAPI()
@@ -22,12 +22,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(actions_router)
-
 supabase = create_client(
     os.environ.get("SUPABASE_URL"),
     os.environ.get("SUPABASE_KEY")
 )
+
+API_KEY = os.environ.get("API_KEY")
+
+# ---------- Models ----------
 
 class WriteRequest(BaseModel):
     agent_id: str
@@ -46,6 +48,16 @@ class SearchRequest(BaseModel):
 class RegisterRequest(BaseModel):
     email: str
 
+class ActionRequest(BaseModel):
+    agent_id: str
+    model: str
+    authorized_by: str
+    scope: List[str] = []
+    prompt: str
+    result: str
+
+# ---------- Auth ----------
+
 def check_key(x_api_key: Optional[str] = Header(None)):
     if not x_api_key:
         raise HTTPException(status_code=401, detail="API key required")
@@ -53,6 +65,11 @@ def check_key(x_api_key: Optional[str] = Header(None)):
     if not result.data:
         raise HTTPException(status_code=401, detail="Invalid API key")
     return result.data[0]
+
+def sha256(data: str) -> str:
+    return hashlib.sha256(data.encode()).hexdigest()
+
+# ---------- Endpoints ----------
 
 @app.get("/")
 @limiter.limit("60/minute")
@@ -112,3 +129,30 @@ def search_memory(request: Request, req: SearchRequest, x_api_key: Optional[str]
     check_key(x_api_key)
     result = supabase.table("memories").select("*").eq("agent_id", req.agent_id).ilike("content", f"%{req.query}%").execute()
     return {"status": "ok", "memories": result.data}
+
+@app.post("/v1/action/log", status_code=201)
+@limiter.limit("100/minute")
+def log_action(request: Request, payload: ActionRequest, x_api_key: Optional[str] = Header(None)):
+    check_key(x_api_key)
+    row = {
+        "agent_id": payload.agent_id,
+        "model": payload.model,
+        "authorized_by": payload.authorized_by,
+        "scope": payload.scope,
+        "prompt_hash": sha256(payload.prompt),
+        "result_hash": sha256(payload.result),
+        "proof_hash": sha256(payload.prompt + payload.result),
+    }
+    res = supabase.table("actions").insert(row).execute()
+    if not res.data:
+        raise HTTPException(status_code=500, detail="Insert failed")
+    return {"action_id": res.data[0]["id"], "proof_hash": res.data[0]["proof_hash"]}
+
+@app.get("/v1/action/proof/{action_id}")
+@limiter.limit("100/minute")
+def get_proof(request: Request, action_id: str, x_api_key: Optional[str] = Header(None)):
+    check_key(x_api_key)
+    res = supabase.table("actions").select("*").eq("id", action_id).single().execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Action not found")
+    return res.data
