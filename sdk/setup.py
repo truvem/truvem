@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="truvem",
-    version="0.2.0",
+    version="0.3.0",
     description="Universal persistent memory for AI agents",
     author="Truvem",
     author_email="gettruvem@gmail.com",
