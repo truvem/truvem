@@ -3,15 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Truvem — Memory for AI Agents</title>
-  <meta name="description" content="Persistent memory for AI agents. Two API calls. Any model. Free.">
-  <meta property="og:title" content="Truvem — Memory for AI Agents">
-  <meta property="og:description" content="Persistent memory for AI agents. Two API calls. Any model.">
+  <title>Truvem — The Proof Layer for AI Actions</title>
+  <meta name="description" content="Every action your AI takes — logged, authorized, verifiable. 2 lines of code. Any model.">
+  <meta property="og:title" content="Truvem — The Proof Layer for AI Actions">
+  <meta property="og:description" content="Every action your AI takes — logged, authorized, verifiable. 2 lines of code. Any model.">
   <meta property="og:url" content="https://truvem.github.io/truvem">
   <meta property="og:type" content="website">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.8/index.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.6/index.css">
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
@@ -46,7 +45,7 @@
     .live-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: blink 2s infinite; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
     .hero h1 { font-size: clamp(40px, 8vw, 80px); font-weight: 900; line-height: 1.04; letter-spacing: -2.5px; margin-bottom: 24px; background: linear-gradient(140deg, #fff 0%, #c4b5fd 55%, #7c3aed 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    .hero p { font-size: clamp(15px, 2.5vw, 19px); color: var(--gray); max-width: 480px; margin: 0 auto 40px; line-height: 1.75; }
+    .hero p { font-size: clamp(15px, 2.5vw, 19px); color: var(--gray); max-width: 520px; margin: 0 auto 40px; line-height: 1.75; }
     .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
     .btn-primary { background: var(--violet); color: white; padding: 14px 28px; border-radius: 10px; font-size: 15px; font-weight: 600; text-decoration: none; transition: transform 0.15s, box-shadow 0.15s; display: inline-flex; align-items: center; gap: 8px; }
     .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 32px rgba(124,58,237,0.4); }
@@ -55,9 +54,9 @@
 
     /* STATS */
     .stats { padding: 0 24px 80px; max-width: 1000px; margin: 0 auto; }
-    .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
-    .stat-item { background: var(--bg2); padding: 28px 20px; text-align: center; }
-    .stat-number { font-size: 34px; font-weight: 900; letter-spacing: -1.5px; line-height: 1; margin-bottom: 6px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
+    .stat-item { background: var(--bg2); padding: 28px 16px; text-align: center; }
+    .stat-number { font-size: 30px; font-weight: 900; letter-spacing: -1.5px; line-height: 1; margin-bottom: 6px; }
     .stat-label { font-size: 11px; color: var(--gray-dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; }
 
     /* CODE */
@@ -101,6 +100,16 @@
     .step h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
     .step p { font-size: 14px; color: var(--gray); line-height: 1.7; }
     .inline-code { background: rgba(124,58,237,0.15); padding: 2px 7px; border-radius: 5px; font-family: var(--mono); font-size: 12px; color: var(--violet-light); }
+
+    /* WHY IT MATTERS */
+    .why-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-top: 48px; }
+    .why-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 32px 28px; transition: border-color 0.2s, transform 0.18s; position: relative; overflow: hidden; }
+    .why-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--violet), var(--violet-light)); opacity: 0; transition: opacity 0.3s; }
+    .why-card:hover { border-color: var(--border-hover); transform: translateY(-3px); }
+    .why-card:hover::before { opacity: 1; }
+    .why-icon { width: 48px; height: 48px; border-radius: 12px; background: var(--violet-dim); border: 1px solid rgba(124,58,237,0.25); display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+    .why-title { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 10px; }
+    .why-desc { font-size: 14px; color: var(--gray); line-height: 1.7; }
 
     /* MODELS */
     .models-flex { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 44px; }
@@ -163,12 +172,16 @@
       .code-grid { grid-template-columns: 1fr; }
       .steps { grid-template-columns: 1fr; }
       .usecases-grid { grid-template-columns: 1fr; }
-      .stats-grid { grid-template-columns: repeat(2,1fr); }
+      .why-grid { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: repeat(3,1fr); }
       .nav-links a:not(.nav-cta) { display: none; }
       footer { flex-direction: column; }
       .get-key-card { padding: 32px 24px; }
       .compare-table { font-size: 12px; }
       .compare-table th, .compare-table td { padding: 12px 14px; }
+    }
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: repeat(2,1fr); }
     }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
   </style>
@@ -203,8 +216,8 @@
 <!-- HERO -->
 <section class="hero">
   <div class="hero-badge"><span class="live-dot"></span>API Live — Free during beta</div>
-  <h1>Your AI agents<br>finally have memory.</h1>
-  <p>Two API calls. Any model. Persistent memory across sessions, machines, and frameworks.</p>
+  <h1>The proof layer for<br>every AI action.</h1>
+  <p>Every action your AI takes — logged, authorized, verifiable. 2 lines of code. Any model.</p>
   <div class="hero-actions">
     <a href="#get-key" class="btn-primary">
       Get free API key
@@ -220,10 +233,79 @@
 <!-- STATS -->
 <div class="stats">
   <div class="stats-grid">
-    <div class="stat-item"><div class="stat-number">2</div><div class="stat-label">API calls</div></div>
+    <div class="stat-item"><div class="stat-number">2</div><div class="stat-label">Lines of code</div></div>
     <div class="stat-item"><div class="stat-number">5+</div><div class="stat-label">LLMs supported</div></div>
     <div class="stat-item"><div class="stat-number">&lt;100<small style="font-size:16px">ms</small></div><div class="stat-label">Response time</div></div>
     <div class="stat-item"><div class="stat-number">$0</div><div class="stat-label">During beta</div></div>
+    <div class="stat-item"><div class="stat-number" style="font-size:22px;letter-spacing:-0.5px">SHA-256</div><div class="stat-label">Append-only proof</div></div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- TRUVEM ACTIONS -->
+<div class="section">
+  <div class="code-grid">
+    <div>
+      <div class="section-label">Truvem Actions</div>
+      <h2 class="section-title">Log every AI action with immutable proof.</h2>
+      <p class="section-sub">Same result as before — plus a verifiable, append-only audit trail. Every action recorded, every authorization tracked.</p>
+      <div class="status-row">
+        <div class="status-green"></div>
+        <span class="status-text">API live · truvem.onrender.com</span>
+      </div>
+    </div>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        <span class="code-fname">truvem_actions.py</span>
+      </div>
+      <pre><span class="cm"># Before Truvem</span>
+<span class="nm">result</span> <span class="op">=</span> <span class="nm">openai</span><span class="op">.</span><span class="fn">chat</span>(<span class="nm">messages</span>)
+
+<span class="cm"># After Truvem — same result + immutable proof</span>
+<span class="nm">result</span> <span class="op">=</span> <span class="nm">truvem</span><span class="op">.</span><span class="fn">log_action</span>(
+  <span class="nm">agent_id</span><span class="op">=</span><span class="st">"my-agent"</span>,
+  <span class="nm">model</span><span class="op">=</span><span class="st">"gpt-4o"</span>,
+  <span class="nm">authorized_by</span><span class="op">=</span><span class="st">"user@company.com"</span>,
+  <span class="nm">prompt</span><span class="op">=</span><span class="nm">messages</span>,
+  <span class="nm">result</span><span class="op">=</span><span class="nm">result</span>
+)
+<span class="cm"># Returns: action_id + proof_hash</span>
+<span class="cm"># (SHA-256, append-only)</span></pre>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- WHY IT MATTERS -->
+<div class="section">
+  <div class="section-label">Why it matters</div>
+  <h2 class="section-title">Every action, accounted for.</h2>
+  <p class="section-sub">Three pillars of trust for every AI action your agents take.</p>
+  <div class="why-grid">
+    <div class="why-card">
+      <div class="why-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 8v4l3 3" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="#a78bfa" stroke-width="2"/></svg>
+      </div>
+      <div class="why-title">Recorded</div>
+      <div class="why-desc">Every action logged with a precise timestamp. Full prompt, full response, full context — nothing lost, nothing hidden.</div>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 3l8 4v5c0 5.25-3.5 8.75-8 10-4.5-1.25-8-4.75-8-10V7l8-4z" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="why-title">Authorized</div>
+      <div class="why-desc">Who approved it, what scope, what permissions. Every action is tied to an identity and a clear authorization chain.</div>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 2v6h6" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 15l2 2 4-4" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="why-title">Provable</div>
+      <div class="why-desc">SHA-256 proof hash, append-only, forever. Cryptographically verifiable. Tamper-evident. Audit-ready from day one.</div>
+    </div>
   </div>
 </div>
 
@@ -537,3 +619,4 @@
 
 </body>
 </html>
+
