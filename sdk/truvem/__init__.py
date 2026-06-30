@@ -49,4 +49,27 @@ class Client:
         )
         return resp.json()
 
+    def log_action(self, agent_id: str, model: str, authorized_by: str,
+                   prompt: str, result: str, scope: list = None) -> dict:
+        resp = requests.post(
+            f"{self.base_url}/v1/action/log",
+            json={
+                "agent_id": agent_id,
+                "model": model,
+                "authorized_by": authorized_by,
+                "scope": scope or [],
+                "prompt": prompt,
+                "result": result
+            },
+            headers=self.headers
+        )
+        return resp.json()
+
+    def get_proof(self, action_id: str) -> dict:
+        resp = requests.get(
+            f"{self.base_url}/v1/action/proof/{action_id}",
+            headers=self.headers
+        )
+        return resp.json()
+
 Truvem = Client
