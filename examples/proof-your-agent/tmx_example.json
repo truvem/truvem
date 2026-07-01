@@ -1,0 +1,15 @@
+{
+  "tmx_version": "0.1",
+  "action_id": "da4c5ad4-cb5a-40be-98c0-b746f1ea793c",
+  "agent_id": "my-agent",
+  "model": "gpt-4o",
+  "authorized_by": "user@company.com",
+  "scope": "web_search",
+  "prompt_hash": "185f8db32271fe25f561a6fc938b2e264306ec304eda518007d1764826381969",
+  "result_hash": "78ae647dc5544d227130a0682a51e30bc7777fbb6d8a8f17007463a3ecd1d524",
+  "proof_hash": "872e4e50ce9990d8b041330c47c9ddd11bec6b503ae9386a99da8584e9bb12c4",
+  "algorithm": "SHA-256",
+  "ledger": "append-only",
+  "standard": "TMX",
+  "created_at": "2026-06-30T08:26:33Z"
+}
